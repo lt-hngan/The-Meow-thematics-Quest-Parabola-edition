@@ -194,7 +194,7 @@ let isGameOver = false, isQuizTime = false, isCutscene = false, isKnockedBack = 
 let isPaused = false, isMuted = false;
 
 let userInfo = { name: "", class: "", group: "N/A" }; 
-let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0;
+let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0, currentStreak = 0; // <-- THÊM currentStreak
 
 let questionStats = {};
 for(let i = 1; i <= 9; i++) questionStats["Q" + i] = { wrongCount: 0, wrongAnswers: [] };
@@ -239,6 +239,7 @@ function sendLiveUpdate(status) {
         class: userInfo.class,
         status: status,
         progress: correctAnswersCount,
+        streak: currentStreak,
         duration: durationStr,
         wrongAnswers: wrongStr,
         reviewTopics: topicsStr,
@@ -428,13 +429,14 @@ function create(data) {
         correctAnswersCount = savedCheckpoint.progress; 
         heartLostCount = savedCheckpoint.heartLostCount; 
         itemsCollectedCount = savedCheckpoint.itemsCollectedCount;
+        currentStreak = savedCheckpoint.streak || 0; // <--- PHỤC HỒI STREAK TỪ CHECKPOINT
 
         tutorialStates.jumpDone = true; 
-        
         let tutLabel = document.getElementById('hud-tutorial-label');
         if (tutLabel) tutLabel.style.display = 'none';
     } else {
         if (!data || !data.keepLives) correctAnswersCount = 0;
+        currentStreak = 0; // <--- RESET STREAK NẾU CHƠI TỪ ĐẦU
         tutorialStates = { jumpWait: false, jumpDone: false, jumpText: null };
         let tutLabel = document.getElementById('hud-tutorial-label');
         if (tutLabel) tutLabel.style.display = 'block';
@@ -471,6 +473,7 @@ function create(data) {
 
     let currentRightEdge = 0;
 
+    // --- TUTORIAL BLOCK ---
     let startPlatWidth = 800;
     createPlatform(platforms, this, startPlatWidth/2, 580, startPlatWidth);
     currentRightEdge = startPlatWidth;
@@ -486,14 +489,15 @@ function create(data) {
     createPlatform(platforms, this, tutPlatX, 580, tutPlatWidth);
     currentRightEdge += gapTut + tutPlatWidth;
 
-    let tItem = createItem(items, this, tutPlatX - 400, 530); tItem.isTutorial = true; tItem.tutMsg = "This is a hint for you to fight with your enemy.";
+    // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ 530, 540 thành 560, 570)
+    let tItem = createItem(items, this, tutPlatX - 400, 560); tItem.isTutorial = true; tItem.tutMsg = "This is a hint for you to fight with your enemy.";
     createProximityTrigger(triggers, this, tItem.x - 150, tItem);
 
-    let tEnemy = createEnemyWithWall(enemies, this, tutPlatX, 540); tEnemy.isTutorial = true;
+    let tEnemy = createEnemyWithWall(enemies, this, tutPlatX, 570); tEnemy.isTutorial = true;
     tEnemy.dataContent = { id: "T1", type: "multi_2", question: "TUTORIAL: 1 + 1 = ?", options: { A: "2", B: "3" }, correct: "A", explain_1: "Tutorial: 1 + 1 = 2" };
     createProximityTrigger(triggers, this, tEnemy.x - 150, tEnemy);
 
-    let tCheck = createCheckpoint(checkpointsGroup, this, tutPlatX + 400, 540); tCheck.isTutorial = true; tCheck.tutMsg = "This is a checkpoint. If you lose, you will restart from the nearest checkpoint.";
+    let tCheck = createCheckpoint(checkpointsGroup, this, tutPlatX + 400, 570); tCheck.isTutorial = true; tCheck.tutMsg = "This is a checkpoint. If you lose, you will restart from the nearest checkpoint.";
     createProximityTrigger(triggers, this, tCheck.x - 150, tCheck);
 
     // --- MAIN GAME BLOCK ---
@@ -507,10 +511,12 @@ function create(data) {
 
         if (i === 2 || i === 6) {
             let item = this.add.image(itemPlatX, -100, 'item');
-            this.physics.add.existing(item, true); item.body.enable = false; item.targetY = itemPlatY - 50; item.triggerX = itemPlatX - 350; item.hasFallen = false; item.dataContent = data;
+            // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ -50 thành -20)
+            this.physics.add.existing(item, true); item.body.enable = false; item.targetY = itemPlatY - 20; item.triggerX = itemPlatX - 350; item.hasFallen = false; item.dataContent = data;
             fallingItems.push(item); items.add(item);
         } else {
-            let item = createItem(items, this, itemPlatX, itemPlatY - 50); item.dataContent = data;
+            // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ -50 thành -20)
+            let item = createItem(items, this, itemPlatX, itemPlatY - 20); item.dataContent = data;
         }
 
         let gap2 = 150 + Math.random() * 100;
@@ -520,16 +526,20 @@ function create(data) {
         createPlatform(platforms, this, enemyPlatX, enemyPlatY, enemyPlatWidth);
         currentRightEdge = enemyPlatX + enemyPlatWidth / 2;
 
-        let enemy = createEnemyWithWall(enemies, this, enemyPlatX, enemyPlatY - 40);
+        // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ -40 thành -10)
+        let enemy = createEnemyWithWall(enemies, this, enemyPlatX, enemyPlatY - 10);
         enemy.dataContent = data;
         
         if ((i + 1) % 2 === 0) {
             let cpWidth = 191 * 4;
             let cpX = currentRightEdge + 150 + cpWidth / 2;
             createPlatform(platforms, this, cpX, enemyPlatY, cpWidth);
-            createCheckpoint(checkpointsGroup, this, cpX, enemyPlatY - 40);
+            // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ -40 thành -10)
+            createCheckpoint(checkpointsGroup, this, cpX, enemyPlatY - 10);
             currentRightEdge = cpX + cpWidth / 2;
         }
+
+        // ... phần trap giữ nguyên ...
 
         if (i === 4 || i === 6) {
             let runwayWidth = 191 * 3; let runwayX = currentRightEdge + runwayWidth / 2;
@@ -807,7 +817,7 @@ function reachCheckpoint(scene, playerRef, cp) {
             let tutLabel = document.getElementById('hud-tutorial-label');
             if (tutLabel) tutLabel.style.display = 'none';
 
-            savedCheckpoint = { x: cp.x, y: cp.y - 50, progress: correctAnswersCount, heartLostCount: heartLostCount, itemsCollectedCount: itemsCollectedCount };
+            savedCheckpoint = { x: cp.x, y: cp.y - 50, progress: correctAnswersCount, heartLostCount: heartLostCount, itemsCollectedCount: itemsCollectedCount, streak: currentStreak }; // <-- THÊM STREAK
         }
     } else {
         if (!cp.reached) {
@@ -815,7 +825,7 @@ function reachCheckpoint(scene, playerRef, cp) {
             let floatTxt = scene.add.text(cp.x, cp.y - 50, 'CHECKPOINT REACHED!', { fontSize: '20px', fill: '#00ff00', fontStyle: 'bold', backgroundColor: '#000', padding: {x:5,y:5} }).setOrigin(0.5);
             scene.tweens.add({ targets: floatTxt, y: cp.y - 100, alpha: 0, duration: 1500, onComplete: () => floatTxt.destroy() });
             
-            savedCheckpoint = { x: cp.x, y: cp.y - 50, progress: correctAnswersCount, heartLostCount: heartLostCount, itemsCollectedCount: itemsCollectedCount };
+            savedCheckpoint = { x: cp.x, y: cp.y - 50, progress: correctAnswersCount, heartLostCount: heartLostCount, itemsCollectedCount: itemsCollectedCount, streak: currentStreak }; // <-- THÊM STREAK
         }
     }
 }
@@ -957,6 +967,7 @@ function resetQuizUIForRetry() {
 // ==========================================
 function processResult(isCorrect, userAnswer) { 
     if (isCorrect) {
+        currentStreak++; // <--- CỘNG 1 VÀO CHUỖI THẮNG
         if (currentData.id !== "T1") { 
             correctAnswersCount++; 
             updateProgressBar(); 
@@ -967,9 +978,9 @@ function processResult(isCorrect, userAnswer) {
         if (currentData.id === "Q7" && userAnswer === "D") {
             extraMsg = "\n\n💡 Explain: " + currentData.explain_4;
         }
-        
         showFeedbackPopup(true, "Excellent! The enemy has been defeated." + extraMsg); 
     } else { 
+        currentStreak = 0; // <--- RESET CHUỖI THẮNG VỀ 0 VÌ TRẢ LỜI SAI
         handleWrongAnswer(currentData.id, userAnswer); 
     } 
 }
@@ -1109,7 +1120,8 @@ function showSummaryPopup() {
                 return ans.trim() === "" ? "[blank]" : ans;
             }).join(" | ");
             
-            wrongDetails += `<li style="margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px;"><b>Q${i}:</b> ${qText}<br><b style="color: #000;">❌ ${stats.wrongCount} wrong attempt(s)</b><br><span style="font-size: 18px; color: #dc3545;">(Your answers: ${formattedAnswers})</span></li>`;
+           // Đã xóa số lần sai và thêm khoảng cách (margin-top: 10px) trước chữ Your answers
+            wrongDetails += `<li style="margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px;"><b>Q${i}:</b> ${qText}<div style="margin-top: 10px; font-size: 18px; color: #dc3545;"><b>Your answers:</b> ${formattedAnswers}</div></li>`;
         }
     }
     wrongDetails += `</ul>`;

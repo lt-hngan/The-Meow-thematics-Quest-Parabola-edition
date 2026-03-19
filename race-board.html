@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Class Race - Live Leaderboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; padding: 20px; 
+            /* YÊU CẦU 1: BACKGROUND NHIỀU LAYER GIỐNG TRANG BÌA */
+            background-image: 
+                url('assets/img/backgrounds/VINES - Second.png'), /* Dây leo trên cùng */
+                url('assets/img/backgrounds/BUSH - BACKGROUND.png'), /* Bụi cây mờ dưới đáy */
+                url('assets/img/backgrounds/WOODS - Fourth.png'), /* Cây lớp gần */
+                url('assets/img/backgrounds/WOODS - Third.png'),  /* Cây lớp vừa */
+                url('assets/img/backgrounds/WOODS - Second.png'), /* Cây lớp xa */
+                url('assets/img/backgrounds/WOODS - First.png'),  /* Cây lớp rất xa */
+                url('assets/img/backgrounds/BACKGROUND.png');     /* Bầu trời dưới cùng */
+            
+            background-repeat: repeat-x; /* Lặp ảnh theo chiều ngang */
+            background-size: auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, cover; /* Giữ tỷ lệ gốc chiều cao */
+            background-position: top left, bottom left, bottom left, bottom left, bottom left, bottom left, center; 
+            image-rendering: pixelated; /* Làm ảnh Pixel sắc nét */
+
+            font-family: 'Roboto', sans-serif; 
+            overflow-x: hidden;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 { 
+            text-align: center; color: #fff; font-family: 'VT323', monospace; 
+            font-size: 70px; text-shadow: 4px 4px 0 #000; 
+            margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 3px;
+        }
+
+        /* Khung đường đua */
+        #race-container {
+            display: flex; flex-direction: column; gap: 15px;
+            background: rgba(0, 0, 0, 0.5); /* Nền tối để nổi bật đường đua */
+            padding: 20px; border-radius: 15px; border: 4px solid #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px); /* Làm mờ background phía sau */
+        }
+
+        /* Từng hàng người chơi */
+        .track-row {
+            display: flex; align-items: center; 
+            border-radius: 50px; padding: 5px 15px; border: 4px solid #999;
+            position: relative; box-shadow: inset 0 5px 10px rgba(0,0,0,0.2);
+            transition: all 0.5s ease;
+        }
+
+        /* ================= YÊU CẦU 4: MÀU SẮC KHUNG THEO RANK ================= */
+        /* Top 1 - Vàng Gôld */
+        .track-row.rank-1 { border-color: #FFD700; background: rgba(255, 215, 0, 0.2); }
+        .track-row.rank-1 .recent-label { background: #FFD700; color: #000; }
+        .track-row.rank-1 .road-fill { background: linear-gradient(90deg, #fff 0%, #FFD700 100%); }
+
+        /* Top 2 - Bạc Silver */
+        .track-row.rank-2 { border-color: #C0C0C0; background: rgba(192, 192, 192, 0.2); }
+        .track-row.rank-2 .recent-label { background: #C0C0C0; color: #000; }
+        .track-row.rank-2 .road-fill { background: linear-gradient(90deg, #fff 0%, #C0C0C0 100%); }
+
+        /* Top 3 - Đồng Bronze */
+        .track-row.rank-3 { border-color: #CD7F32; background: rgba(205, 127, 50, 0.2); }
+        .track-row.rank-3 .recent-label { background: #CD7F32; color: #fff; }
+        .track-row.rank-3 .road-fill { background: linear-gradient(90deg, #fff 0%, #CD7F32 100%); }
+
+        /* Top 4, 5 - Xanh dương tiêu chuẩn */
+        .track-row.rank-other { border-color: #007bff; background: rgba(0, 123, 255, 0.2); }
+        .track-row.rank-other .recent-label { background: #007bff; color: #fff; }
+        .track-row.rank-other .road-fill { background: linear-gradient(90deg, #fff 0%, #007bff 100%); }
+
+        /* Runner Up (Latest Update) - Cam/Đỏ */
+        .track-row.rank-runnerup { border-color: #ff4500; background: rgba(255, 69, 0, 0.2); border-style: dashed; }
+        .track-row.rank-runnerup .recent-label { background: #ff4500; color: #fff; }
+        .track-row.rank-runnerup .road-fill { background: linear-gradient(90deg, #fff 0%, #ff4500 100%); }
+        /* ====================================================================== */
+
+        .recent-label {
+            position: absolute; top: -12px; left: 30px; 
+            font-size: 14px; padding: 2px 10px; border-radius: 10px; font-weight: bold;
+            text-transform: uppercase; border: 2px solid #fff;
+        }
+
+        .player-info {
+            width: 150px; min-width: 150px; font-size: 20px; font-weight: bold; 
+            color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
+            display: flex; flex-direction: column; text-shadow: 2px 2px 0 #000;
+        }
+        .player-class { font-size: 14px; color: #FFD700; }
+
+        /* Đường chạy */
+        .road {
+            flex-grow: 1; height: 50px; background: rgba(0,0,0,0.5); border-radius: 25px;
+            position: relative; margin: 0 15px; border: 3px solid #fff;
+            display: flex; align-items: center; overflow: hidden; /* Để ẩn phần fill thừa */
+        }
+        
+        /* ================= YÊU CẦU 3: PHẦN PROGRESS ĐÃ ĐI ĐƯỢC FILL MÀU ================= */
+        .road-fill {
+            position: absolute; left: 0; top: 0; height: 100%;
+            width: 0%; /* Sẽ được cập nhật bằng JS */
+            background: linear-gradient(90deg, #fff 0%, #28a745 100%); /* Màu mặc định xanh lá */
+            border-radius: 25px 0 0 25px;
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* Mượt mà y hệt xe */
+            z-index: 1;
+        }
+        /* ============================================================================== */
+        
+        .finish-line {
+            position: absolute; right: 0; top: 0; width: 40px; height: 100%;
+            background: repeating-linear-gradient(45deg, #fff 0, #fff 10px, #000 10px, #000 20px);
+            border-radius: 0 25px 25px 0; border-left: 3px solid #FFD700;
+            z-index: 2;
+        }
+
+        /* Biểu tượng Xe/Nhân vật */
+        .car {
+            position: absolute; left: 0%; font-size: 35px; z-index: 10;
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
+            
+            /* ================= YÊU CẦU 2: FLIP ICON XE (QUAY MẶT SANG PHẢI) ================= */
+            transform: scaleX(-1); /* Lật ngang emoji xe */
+            /* ============================================================================== */
+        }
+
+        /* Chế độ xe đang "bay" (Fire Streak) */
+        .car.on-fire {
+            transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .car.on-fire::after {
+            content: '🔥'; position: absolute; 
+            /* Vì xe bị flip, nên lửa phải chỉnh lại vị trí ở bên phải (đuôi xe mới) */
+            right: -30px; top: -5px; font-size: 30px;
+            animation: flicker 0.2s infinite alternate; text-shadow: 2px 2px 5px red;
+            transform: scaleX(-1); /* Lật ngược lửa lại cho đúng chiều rơi */
+        }
+        @keyframes flicker {
+            0% { transform: scale(0.8) scaleX(-1) rotate(-10deg); opacity: 0.8; }
+            100% { transform: scale(1.2) scaleX(-1) rotate(10deg); opacity: 1; }
+        }
+
+        /* Hiệu ứng Vượt mặt (Overtaking) */
+        .overtaking { animation: flashShake 1s ease; }
+        @keyframes flashShake {
+            0% { filter: drop-shadow(0 0 0px #FFD700); transform: scale(1) scaleX(-1); }
+            20% { filter: drop-shadow(0 0 15px #FFD700); transform: scale(1.3) scaleX(-1) rotate(-5deg); }
+            40% { transform: scale(1.3) scaleX(-1) rotate(5deg); }
+            60% { transform: scale(1.3) scaleX(-1) rotate(-5deg); }
+            80% { filter: drop-shadow(0 0 15px #FFD700); transform: scale(1.3) scaleX(-1) rotate(0deg); }
+            100% { filter: drop-shadow(0 0 0px transparent); transform: scale(1) scaleX(-1); }
+        }
+
+        /* Thông báo Về đích */
+        #announcement {
+            display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: #FFD700; font-size: 60px; font-family: 'VT323', monospace;
+            padding: 20px 50px; border-radius: 20px; z-index: 9999; text-align: center;
+            border: 5px solid #FFD700; box-shadow: 0 0 50px #FFD700; text-transform: uppercase;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🏎️ Class Race 🏁</h1>
+    <div id="race-container">
+        <h2 style="text-align: center; color: #fff;">Waiting for racers...</h2>
+    </div>
+
+    <div id="announcement"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // !!! ĐIỀN CONFIG FIREBASE CỦA BẠN VÀO ĐÂY !!!
+        const firebaseConfig = {
+  apiKey: "AIzaSyBFudz97TIDFD7dUZuVIKB-IH0vcz6bA-M",
+  authDomain: "the-meow-thematics-quest.firebaseapp.com",
+  databaseURL: "https://the-meow-thematics-quest-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "the-meow-thematics-quest",
+  storageBucket: "the-meow-thematics-quest.firebasestorage.app",
+  messagingSenderId: "640229575133",
+  appId: "1:640229575133:web:28c8533120bcdbe2b78e34"
+};
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let previousState = {}; 
+        const TOTAL_QUESTIONS = 7;
+        // Danh sách xe phong phú hơn
+        const CAR_EMOJIS = ['🏎️', '🚓', '🚕', '🚙', '🚗', '🚜', '🛵', '🚲']; 
+
+        // Phát pháo hoa
+        function fireConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        // Hiển thị Banner người thắng
+        function showAnnouncement(name) {
+            let banner = document.getElementById('announcement');
+            banner.innerHTML = `🏆 ${name} ĐÃ VỀ ĐÍCH! 🏆`;
+            banner.style.display = 'block';
+            fireConfetti();
+            setTimeout(() => { banner.style.display = 'none'; }, 5000);
+        }
+
+        db.ref('sessions').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            let students = [];
+            for (let id in data) {
+                if (data[id].status !== 'none' && !data[id].status.includes('disconnected')) {
+                    students.push({ id: id, ...data[id] });
+                }
+            }
+
+            // Sắp xếp
+            students.sort((a, b) => {
+                let pA = a.progress || 0; let pB = b.progress || 0;
+                if (pB !== pA) return pB - pA;
+                return (a.lastUpdated || 0) - (b.lastUpdated || 0); 
+            });
+
+            // Gán Rank
+            students.forEach((s, index) => s.rank = index + 1);
+
+            // Lấy Top 5
+            let displayList = students.slice(0, 5);
+
+            // Slot cho Runner Up (người cập nhật gần nhất ngoài Top 5)
+            if (students.length > 5) {
+                let others = students.slice(5);
+                others.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+                let recent = others[0];
+                recent.isRecentSlot = true;
+                displayList.push(recent);
+            }
+
+            const container = document.getElementById('race-container');
+            container.innerHTML = "";
+            
+            let html = "";
+            displayList.forEach(student => {
+                let prog = student.progress || 0;
+                if (prog > TOTAL_QUESTIONS) prog = TOTAL_QUESTIONS;
+                
+                // Tính % vị trí xe
+                let leftPercent = (prog / TOTAL_QUESTIONS) * 95; 
+                
+                let streakClass = (student.streak >= 3) ? "on-fire" : "";
+                let carIcon = CAR_EMOJIS[(student.name || "").length % CAR_EMOJIS.length];
+                
+                let overtakeClass = "";
+                let prev = previousState[student.id];
+                // Chỉ check vượt mặt cho những người nằm trong Top 5
+                if (prev && student.rank < prev.rank && !student.isRecentSlot) {
+                    overtakeClass = "overtaking";
+                }
+
+                if (prog === TOTAL_QUESTIONS && prev && prev.progress < TOTAL_QUESTIONS) {
+                    showAnnouncement(student.name);
+                }
+
+                // ================= YÊU CẦU 4: XỬ LÝ RANK CLASS VÀ LABEL =================
+                let rowRankClass = "";
+                let labelText = "";
+                
+                if (student.isRecentSlot) {
+                    rowRankClass = "rank-runnerup";
+                    labelText = "Runner Up"; // ĐỔI TÊN TỪ LATEST UPDATE
+                } else {
+                    if (student.rank === 1) rowRankClass = "rank-1";
+                    else if (student.rank === 2) rowRankClass = "rank-2";
+                    else if (student.rank === 3) rowRankClass = "rank-3";
+                    else rowRankClass = "rank-other"; // Cho rank 4, 5
+                    
+                    labelText = `TOP ${student.rank}`;
+                }
+                // =======================================================================
+
+                html += `
+                    <div class="track-row ${rowRankClass}">
+                        <div class="recent-label">${labelText}</div>
+                        <div class="player-info">
+                            <span class="player-class">${student.class || ""}</span>
+                            <span>${student.name || "Unknown"}</span>
+                        </div>
+                        <div class="road">
+                            <div class="road-fill" style="width: ${leftPercent}%;"></div>
+                            
+                            <div class="finish-line"></div>
+                            
+                            <div class="car ${streakClass} ${overtakeClass}" style="left: ${leftPercent}%;">
+                                ${carIcon}
+                            </div>
+                        </div>
+                        <div style="font-weight: bold; font-size: 30px; color: #fff; width: 50px; text-align: right; text-shadow: 2px 2px 0 #000;">
+                            ${prog}/${TOTAL_QUESTIONS}
+                        </div>
+                    </div>
+                `;
+
+                previousState[student.id] = { rank: student.rank, progress: prog };
+            });
+
+            container.innerHTML = html;
+        });
+    </script>
+</body>
+</html>
