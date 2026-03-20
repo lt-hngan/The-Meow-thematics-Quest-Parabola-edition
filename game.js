@@ -1175,41 +1175,45 @@ function alignUIToCanvas() {
     
     let rect = canvas.getBoundingClientRect();
     
-    // Ép UI đẩy xuống một chút để né phần "Safe Area" (Thanh URL) trên Mobile Safari
-    let safeTop = Math.max(rect.top + 15, 30); 
+    // Khung canvas giờ đây đã vừa khít với không gian thực tế của Safari, 
+    // nên ta đặt UI thẳng vào mép của khung luôn (cách lề 15px).
+    let exactTop = rect.top + 15; 
+    let exactLeft = rect.left + 15;
+    let exactRight = window.innerWidth - rect.right + 15;
     
     let topLeft = document.getElementById('hud-top-left');
     let topRight = document.getElementById('hud-controls');
     let progress = document.getElementById('hud-progress');
     
     if (topLeft) {
-        topLeft.style.left = Math.max(rect.left + 15, 15) + 'px';
-        topLeft.style.top = safeTop + 'px';
+        topLeft.style.left = exactLeft + 'px';
+        topLeft.style.top = exactTop + 'px';
     }
     if (topRight) {
-        topRight.style.right = Math.max(window.innerWidth - rect.right + 15, 15) + 'px';
-        topRight.style.top = safeTop + 'px';
+        topRight.style.right = exactRight + 'px';
+        topRight.style.top = exactTop + 'px';
     }
     if (progress) {
-        progress.style.top = safeTop + 'px';
+        progress.style.top = exactTop + 'px';
     }
 }
 
-// ==========================================
-// FIX LỖI XOAY MÀN HÌNH TRÊN MOBILE SAFARI
-// ==========================================
+// Cập nhật lại Game Engine của Phaser mỗi khi xoay máy để hình ảnh không bị méo
 let resizeTimeout;
-
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
-    // Đợi 300ms để Safari tính toán xong khung hình mới rồi mới đặt lại vị trí UI
-    resizeTimeout = setTimeout(alignUIToCanvas, 300);
+    resizeTimeout = setTimeout(() => {
+        if (game && game.scale) game.scale.refresh(); // Ép Phaser vẽ lại
+        alignUIToCanvas();
+    }, 500);
 });
 
-// Lắng nghe thêm sự kiện xoay màn hình độc quyền của điện thoại
 window.addEventListener('orientationchange', () => {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(alignUIToCanvas, 500); 
+    resizeTimeout = setTimeout(() => {
+        if (game && game.scale) game.scale.refresh();
+        alignUIToCanvas();
+    }, 600); 
 });
 // ==========================================
 // REVIEW POP-UPS LOGIC

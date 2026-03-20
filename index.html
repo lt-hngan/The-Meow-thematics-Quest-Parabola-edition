@@ -8,38 +8,30 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
+    <script>
+        function setRealViewport() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        window.addEventListener('resize', setRealViewport);
+        window.addEventListener('orientationchange', setRealViewport);
+        setRealViewport();
+    </script>
+
     <style>
-        body { margin: 0; padding: 0; background-color: #202020; height: 100vh; width: 100vw; overflow: hidden; touch-action: none; font-family: 'Roboto', sans-serif; display: flex; justify-content: center; align-items: center; }
+        /* Đã thay đổi height thành biến --vh để vừa vặn 100% không bị lẹm */
+        body { 
+            margin: 0; padding: 0; background-color: #202020; 
+            width: 100vw; 
+            height: 100vh; /* Dự phòng cho các trình duyệt cũ */
+            height: calc(var(--vh, 1vh) * 100); /* Ép chiều cao theo kích thước thực tế tính được */
+            overflow: hidden; touch-action: none; font-family: 'Roboto', sans-serif; 
+            display: flex; justify-content: center; align-items: center; 
+        }
+        
         #game-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #000; overflow: hidden; }
         canvas { display: block; max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
         
-        #start-screen { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-            
-            /* Gộp nhiều lớp ảnh. Lớp nào viết trước sẽ nằm đè lên trên lớp viết sau */
-            background-image: 
-                url('assets/img/backgrounds/VINES - Second.png'), /* Dây leo trên cùng */
-                url('assets/img/backgrounds/BUSH - BACKGROUND.png'), /* Bụi cây mờ dưới đáy */
-                url('assets/img/backgrounds/WOODS - Fourth.png'), /* Cây lớp gần */
-                url('assets/img/backgrounds/WOODS - Third.png'),  /* Cây lớp vừa */
-                url('assets/img/backgrounds/WOODS - Second.png'), /* Cây lớp xa */
-                url('assets/img/backgrounds/WOODS - First.png'),  /* Cây lớp rất xa */
-                url('assets/img/backgrounds/BACKGROUND.png');     /* Bầu trời dưới cùng */
-            
-            /* Các thuộc tính nền */
-            background-repeat: repeat-x; /* Lặp ảnh theo chiều ngang */
-            background-size: auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, cover; /* Giữ tỷ lệ gốc chiều cao, bầu trời thì cover */
-            background-position: top left, bottom left, bottom left, bottom left, bottom left, bottom left, center; 
-
-            /* Kỹ thuật để làm ảnh Pixel Art sắc nét */
-            image-rendering: pixelated; 
-            
-            display: flex; flex-direction: column; justify-content: flex-start; align-items: center; 
-            color: white; z-index: 2000; font-family: 'VT323', monospace; 
-            overflow-y: auto; touch-action: auto; padding: 20px 0; box-sizing: border-box; 
-        }
-        h1 { font-size: 45px; color: #FFD700; text-shadow: 4px 4px 0 #000; margin-bottom: 10px; text-align: center; line-height: 1.1; padding: 0 10px; margin-top: 30px;}
-        p { font-family: 'VT323', monospace; font-size: 22px; margin-bottom: 20px; text-shadow: 2px 2px 0 #000; text-align: center; }
         .info-input { padding: 12px; margin: 8px; width: 80%; max-width: 300px; min-width: 250px; font-size: 18px; border-radius: 5px; border: 2px solid #fff; background: rgba(255,255,255,0.9); font-family: 'VT323', monospace; box-sizing: border-box; }
         #start-btn { padding: 12px 40px; font-size: 26px; background: #28a745; color: white; border: 4px solid #1e7e34; border-radius: 10px; cursor: pointer; margin-top: 20px; font-family: 'VT323', monospace; margin-bottom: 40px;}
         
@@ -49,6 +41,7 @@
         .pause-btn { padding: 15px 30px; margin: 10px; font-size: 22px; width: 80%; max-width: 400px; background: #800080; color: white; border: 3px solid #fff; border-radius: 10px; cursor: pointer; font-family: 'VT323', monospace; text-transform: uppercase; transition: 0.2s; }
         .pause-btn:hover { background: #5c005c; transform: scale(1.05); }
 
+        /* Ép các pop-up nhỏ lại trên điện thoại để không chui xuống dưới Safari */
         #quiz-overlay, #tutorial-overlay, #tutorial-info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; border: 5px solid #333; font-family: 'Roboto', sans-serif; box-sizing: border-box; max-height: 80vh; overflow-y: auto; }
         #quiz-title { font-family: 'VT323', monospace; font-size: 30px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px dashed #ccc; line-height: 1; }
         #quiz-content { font-size: 20px; color: #222; margin-bottom: 15px; }
@@ -57,6 +50,19 @@
         .action-btn { padding: 10px 30px; font-size: 22px; background: #800080; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-family: 'VT323', monospace; }
         .correct-text { color: #28a745; font-family: 'VT323', monospace; font-size: 26px !important; }
         .wrong-text { color: #dc3545; font-family: 'Roboto', sans-serif; font-size: 18px; }
+
+        /* Responsive cho điện thoại ngang */
+        @media screen and (max-height: 450px) {
+            #start-screen h1 { font-size: 35px !important; }
+            #mobile-warning { font-size: 13px !important; padding: 5px 10px !important; margin: 10px 0 !important;}
+            #start-screen input, #start-screen select { font-size: 16px !important; padding: 10px !important; margin-bottom: 15px !important; }
+            #start-btn { font-size: 24px !important; padding: 10px !important; }
+            #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay { max-height: 85vh !important; padding: 10px 15px !important;}
+            .option-btn { padding: 6px !important; margin: 5px 0 !important; font-size: 16px !important; }
+            #quiz-title { font-size: 24px !important; margin-bottom: 10px !important; }
+            #quiz-content { font-size: 16px !important; margin-bottom: 10px !important;}
+            .action-btn { font-size: 18px !important; padding: 6px 15px !important; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
@@ -90,42 +96,42 @@
                 <img src="assets/img/menu.png" style="width: 24px; height: 24px; object-fit: contain;">
             </button>
         </div>
-<div id="start-screen" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background-image: url('assets/img/backgrounds/VINES - Second.png'), url('assets/img/backgrounds/BUSH - BACKGROUND.png'), url('assets/img/backgrounds/WOODS - Fourth.png'), url('assets/img/backgrounds/WOODS - Third.png'), url('assets/img/backgrounds/WOODS - Second.png'), url('assets/img/backgrounds/WOODS - First.png'), url('assets/img/backgrounds/BACKGROUND.png'); background-repeat: repeat-x; background-size: auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, cover; background-position: top left, bottom left, bottom left, bottom left, bottom left, bottom left, center; image-rendering: pixelated; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; z-index: 2000; overflow-y: auto; touch-action: auto; padding: 20px 0; box-sizing: border-box;">
+<div id="start-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: calc(var(--vh, 1vh) * 100); background-image: url('assets/img/backgrounds/VINES - Second.png'), url('assets/img/backgrounds/BUSH - BACKGROUND.png'), url('assets/img/backgrounds/WOODS - Fourth.png'), url('assets/img/backgrounds/WOODS - Third.png'), url('assets/img/backgrounds/WOODS - Second.png'), url('assets/img/backgrounds/WOODS - First.png'), url('assets/img/backgrounds/BACKGROUND.png'); background-repeat: repeat-x; background-size: auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, cover; background-position: top left, bottom left, bottom left, bottom left, bottom left, bottom left, center; image-rendering: pixelated; z-index: 2000;">
             
-            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 20px; background: rgba(0,0,0,0.7); padding: 15px 30px; border-radius: 15px; border: 4px solid #FFD700; box-shadow: 0 10px 30px rgba(0,0,0,0.6); backdrop-filter: blur(5px); flex-wrap: wrap;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center; padding: 20px 0; box-sizing: border-box;">
                 
-                <div style="width: 32px; height: 32px; background: url('assets/img/character/1_Cat_Idle-Sheet.png') left center no-repeat; background-size: cover; transform: scale(2.5); image-rendering: pixelated; margin: 10px;"></div>
-                
-                <h1 style="margin: 0; padding: 0; font-size: 45px; letter-spacing: 2px; text-align: center; color: #FFD700; text-shadow: 4px 4px 0 #000; font-family: 'VT323', monospace;">THE MEOW-THEMATICS QUEST:<br>PARABOLA EDITION</h1>
-                
-                <div style="width: 32px; height: 32px; background: url('assets/img/pipe.png') center center no-repeat; background-size: contain; transform: scale(1.5); image-rendering: pixelated; margin: 10px;"></div>
-            </div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 15px; border: 4px solid #FFD700; box-shadow: 0 10px 30px rgba(0,0,0,0.6); backdrop-filter: blur(5px); flex-wrap: wrap; width: 90%; max-width: 650px; box-sizing: border-box;">
+                    <div style="width: 32px; height: 32px; background: url('assets/img/character/1_Cat_Idle-Sheet.png') left center no-repeat; background-size: cover; transform: scale(2); image-rendering: pixelated; margin: 5px;"></div>
+                    <h1 style="margin: 0; padding: 0; font-size: 40px; letter-spacing: 1px; text-align: center; color: #FFD700; text-shadow: 3px 3px 0 #000; font-family: 'VT323', monospace; line-height: 1;">THE MEOW-THEMATICS QUEST:<br>PARABOLA EDITION</h1>
+                    <div style="width: 32px; height: 32px; background: url('assets/img/pipe.png') center center no-repeat; background-size: contain; transform: scale(1.5); image-rendering: pixelated; margin: 5px;"></div>
+                </div>
 
-            <p style="font-size: 16px; color: #000; background-color: rgba(255, 255, 255, 0.85); padding: 8px 20px; border-radius: 10px; text-shadow: none; margin: 20px 0 10px 0; text-align: center; font-family: 'Roboto', sans-serif; font-weight: bold; max-width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                📱 For mobile users, rotate your device horizontally and unmute for full experience.
-            </p>
+                <p id="mobile-warning" style="font-size: 15px; color: #000; background-color: rgba(255, 255, 255, 0.9); padding: 8px 15px; border-radius: 10px; margin: 20px 0 10px 0; text-align: center; font-family: 'Roboto', sans-serif; font-weight: bold; width: 85%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); box-sizing: border-box;">
+                    📱 For mobile users, rotate your device horizontally and unmute for full experience.
+                </p>
 
-            <div style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.7); padding: 20px 30px; border-radius: 15px; margin-top: 5px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); text-align: center;">
+                <div style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.7); padding: 20px; border-radius: 15px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); width: 90%; max-width: 500px; box-sizing: border-box;">
+                    <p style="margin: 0 0 15px 0; font-size: 24px; color: #FFD700; font-family: 'VT323', monospace;">Fill in the blanks to start!</p>
+                    
+                    <label style="color: #fff; font-size: 14px; margin-bottom: 5px; font-family: 'Roboto', sans-serif; text-align: center;">
+                        Members (full name, separated by &) <br><small style="color: #ccc; font-style: italic;">(e.g. Nguyễn Văn A & Trần Thị B)</small>
+                    </label>
+                    <input type="text" id="info-name" class="info-input" placeholder="Type here..." style="width: 100%; font-size: 18px; padding: 12px; margin-bottom: 15px; box-sizing: border-box;">
+                    
+                    <label style="color: #fff; font-size: 14px; margin-bottom: 5px; font-family: 'Roboto', sans-serif;">Class</label>
+                    <select id="info-class" class="info-input" style="appearance: auto; cursor: pointer; width: 100%; font-size: 18px; padding: 12px; margin-bottom: 20px; box-sizing: border-box;">
+                        <option value="" disabled selected>Select Class</option>
+                        <option value="10A">10A</option>
+                        <option value="10B">10B</option>
+                    </select>
+                    
+                    <button id="start-btn" onclick="startGame()" style="width: 100%; font-size: 24px; padding: 12px; margin: 0; cursor: pointer;">PLAY</button>
+                </div>
                 
-                <p style="margin: 0 0 15px 0; font-size: 26px; color: #FFD700; font-family: 'VT323', monospace;">Fill in the blanks to start!</p>
-                
-                <label style="color: #fff; font-size: 16px; margin-bottom: 5px; font-family: 'Roboto', sans-serif;">
-                    Members (full name, separated by &) <br>
-                    <small style="color: #ccc; font-style: italic;">(e.g. Nguyễn Văn A & Trần Thị B)</small>
-                </label>
-                <input type="text" id="info-name" class="info-input" placeholder="Type here...">
-                
-                <label style="color: #fff; font-size: 16px; margin-top: 10px; margin-bottom: 5px; font-family: 'Roboto', sans-serif;">Class</label>
-                <select id="info-class" class="info-input" style="appearance: auto; cursor: pointer;">
-                    <option value="" disabled selected>Select Class</option>
-                    <option value="10A">10A</option>
-                    <option value="10B">10B</option>
-                </select>
-                
-                <button id="start-btn" onclick="startGame()">PLAY</button>
+                <div style="height: 60px; flex-shrink: 0;"></div>
             </div>
             
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 150px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); pointer-events: none; z-index: -1;"></div>
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); pointer-events: none; z-index: 2001;"></div>
         </div>
 
         <div id="pause-menu" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:7000; flex-direction:column; justify-content:center; align-items:center;">
