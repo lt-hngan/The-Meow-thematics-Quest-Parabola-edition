@@ -46,8 +46,8 @@
         .pause-btn { padding: 15px 30px; margin: 10px; font-size: 22px; width: 80%; max-width: 400px; background: #800080; color: white; border: 3px solid #fff; border-radius: 10px; cursor: pointer; font-family: 'VT323', monospace; text-transform: uppercase; transition: 0.2s; }
         .pause-btn:hover { background: #5c005c; transform: scale(1.05); }
 
-        /* Ép các pop-up nhỏ lại trên điện thoại để không chui xuống dưới Safari */
-        #quiz-overlay, #tutorial-overlay, #tutorial-info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; border: 5px solid #333; font-family: 'Roboto', sans-serif; box-sizing: border-box; max-height: 80vh; overflow-y: auto; }
+        /* 1. ĐÂY LÀ PHẦN CSS CƠ BẢN CỦA POP-UP (GIỮ NGUYÊN) */
+        #quiz-overlay, #tutorial-overlay, #tutorial-info, #knowledge-review-overlay, #questions-review-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; border: 5px solid #333; font-family: 'Roboto', sans-serif; box-sizing: border-box; max-height: 80vh; overflow-y: auto; }
         #quiz-title { font-family: 'VT323', monospace; font-size: 30px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px dashed #ccc; line-height: 1; }
         #quiz-content { font-size: 20px; color: #222; margin-bottom: 15px; }
         .option-btn { display: block; width: 100%; padding: 12px; margin: 8px 0; background: #f0f0f0; border: 3px solid #ccc; border-radius: 10px; cursor: pointer; text-align: left; font-size: 18px; font-weight: bold; color: #555; transition: 0.2s; }
@@ -56,17 +56,39 @@
         .correct-text { color: #28a745; font-family: 'VT323', monospace; font-size: 26px !important; }
         .wrong-text { color: #dc3545; font-family: 'Roboto', sans-serif; font-size: 18px; }
 
-        /* Responsive cho điện thoại ngang */
+        /* 2. ĐÂY LÀ PHẦN LÀM NÉT THANH MẠNG VÀ NÚT BẤM (MỚI THÊM) */
+        #hud-lives img { width: 24px !important; height: 24px !important; image-rendering: pixelated; }
+        #hud-progress img { width: 32px !important; height: 32px !important; image-rendering: pixelated; }
+        .hud-btn { width: 32px !important; height: 32px !important; }
+        .hud-btn img { width: 20px !important; height: 20px !important; image-rendering: pixelated; }
+
+        /* 3. ĐÂY LÀ PHẦN RESPONSIVE CHO ĐIỆN THOẠI (Bóp nhỏ pop-up nhưng giữ nguyên font chữ) */
         @media screen and (max-height: 450px) {
             #start-screen h1 { font-size: 35px !important; }
             #mobile-warning { font-size: 13px !important; padding: 5px 10px !important; margin: 10px 0 !important;}
             #start-screen input, #start-screen select { font-size: 16px !important; padding: 10px !important; margin-bottom: 15px !important; }
             #start-btn { font-size: 24px !important; padding: 10px !important; }
-            #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay { max-height: 85vh !important; padding: 10px 15px !important;}
-            .option-btn { padding: 6px !important; margin: 5px 0 !important; font-size: 16px !important; }
-            #quiz-title { font-size: 24px !important; margin-bottom: 10px !important; }
-            #quiz-content { font-size: 16px !important; margin-bottom: 10px !important;}
-            .action-btn { font-size: 18px !important; padding: 6px 15px !important; }
+            
+            /* Ép Pop-up chừa lề an toàn nhiều hơn (max-height giảm xuống 75vh) */
+            #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay { 
+                max-height: 75vh !important; 
+                width: 85% !important; 
+                padding: 10px 15px !important;
+            }
+            
+            /* Bóp nhỏ các khoảng cách margin/padding để có nhiều không gian chứa chữ hơn */
+            #quiz-title { font-size: 24px !important; margin-bottom: 5px !important; padding-bottom: 5px !important; }
+            #quiz-content { margin-bottom: 8px !important;}
+            .option-btn { padding: 5px 10px !important; margin: 4px 0 !important; }
+            #feedback-message { margin-bottom: 10px !important; }
+            .action-btn { font-size: 18px !important; padding: 6px 15px !important; margin-top: 5px !important;}
+            
+            /* Thu nhỏ HUD xuống thêm một bậc nữa trên điện thoại ngang */
+            #hud-lives img { width: 20px !important; height: 20px !important; }
+            .hud-btn { width: 28px !important; height: 28px !important; }
+            .hud-btn img { width: 16px !important; height: 16px !important; }
+            #hud-progress img { width: 26px !important; height: 26px !important; }
+            #progress-fill { height: 14px !important; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>

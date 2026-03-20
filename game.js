@@ -598,6 +598,15 @@ function create(data) {
     this.physics.add.overlap(player, finishLine, (p, f) => winGame(this, p, f));
     this.physics.add.overlap(player, checkpointsGroup, (p, cp) => reachCheckpoint(this, p, cp));
     this.physics.add.overlap(player, triggers, (p, t) => triggerOverlap(this, p, t));
+    // ===== ĐOẠN CODE THÊM VÀO ĐỂ PHÓNG TO GAME TRÊN MOBILE =====
+    let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
+    if (isMobile) {
+        this.cameras.main.setZoom(1.25); // Phóng to toàn bộ vạn vật lên 25%
+        // Tinh chỉnh lại góc nhìn camera để nhân vật không bị khuất khi phóng to
+        this.cameras.main.setFollowOffset(-150, 50); 
+    }
+    // ==============================================================
+
 
     this.input.on('pointerdown', () => jump(this)); 
     cursors = this.input.keyboard.createCursorKeys();
