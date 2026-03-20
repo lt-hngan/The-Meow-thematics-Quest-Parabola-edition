@@ -1175,22 +1175,42 @@ function alignUIToCanvas() {
     
     let rect = canvas.getBoundingClientRect();
     
+    // Ép UI đẩy xuống một chút để né phần "Safe Area" (Thanh URL) trên Mobile Safari
+    let safeTop = Math.max(rect.top + 15, 30); 
+    
     let topLeft = document.getElementById('hud-top-left');
     let topRight = document.getElementById('hud-controls');
     let progress = document.getElementById('hud-progress');
     
     if (topLeft) {
-        topLeft.style.left = (rect.left + 15) + 'px';
-        topLeft.style.top = (rect.top + 15) + 'px';
+        topLeft.style.left = Math.max(rect.left + 15, 15) + 'px';
+        topLeft.style.top = safeTop + 'px';
     }
     if (topRight) {
-        topRight.style.right = (window.innerWidth - rect.right + 15) + 'px';
-        topRight.style.top = (rect.top + 15) + 'px';
+        topRight.style.right = Math.max(window.innerWidth - rect.right + 15, 15) + 'px';
+        topRight.style.top = safeTop + 'px';
     }
     if (progress) {
-        progress.style.top = (rect.top + 15) + 'px';
+        progress.style.top = safeTop + 'px';
     }
 }
+
+// ==========================================
+// FIX LỖI XOAY MÀN HÌNH TRÊN MOBILE SAFARI
+// ==========================================
+let resizeTimeout;
+
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    // Đợi 300ms để Safari tính toán xong khung hình mới rồi mới đặt lại vị trí UI
+    resizeTimeout = setTimeout(alignUIToCanvas, 300);
+});
+
+// Lắng nghe thêm sự kiện xoay màn hình độc quyền của điện thoại
+window.addEventListener('orientationchange', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(alignUIToCanvas, 500); 
+});
 // ==========================================
 // REVIEW POP-UPS LOGIC
 // ==========================================
@@ -1233,4 +1253,4 @@ window.openQuestionsReview = function() {
 window.closeQuestionsReview = function() {
     document.getElementById('questions-review-overlay').style.display = 'none';
 };
-window.addEventListener('resize', alignUIToCanvas);
+window.addEventListener(alignUIToCanvas);
