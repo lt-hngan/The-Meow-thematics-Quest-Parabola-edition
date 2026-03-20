@@ -1170,31 +1170,33 @@ function winGame(scene, playerRef, finishLine) {
 }
 
 function alignUIToCanvas() {
-    let canvas = document.querySelector('canvas');
-    if (!canvas) return;
-    
-    let rect = canvas.getBoundingClientRect();
-    
-    // Khung canvas giờ đây đã vừa khít với không gian thực tế của Safari, 
-    // nên ta đặt UI thẳng vào mép của khung luôn (cách lề 15px).
-    let exactTop = rect.top + 15; 
-    let exactLeft = rect.left + 15;
-    let exactRight = window.innerWidth - rect.right + 15;
-    
+    // Nhận diện xem người dùng có đang dùng thiết bị nhỏ (Mobile) hay không
+    let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
+
+    // Đặt lề an toàn: 
+    // - Top: Luôn cách đỉnh 15px.
+    // - Left/Right: Nếu là Mobile, thụt vào 45px để né tai thỏ (Notch) ở 2 đầu. Nếu là PC thì chỉ cách 15px.
+    let safeTop = 15;
+    let safeLeft = isMobile ? 45 : 15;
+    let safeRight = isMobile ? 45 : 15;
+
     let topLeft = document.getElementById('hud-top-left');
     let topRight = document.getElementById('hud-controls');
     let progress = document.getElementById('hud-progress');
-    
+
     if (topLeft) {
-        topLeft.style.left = exactLeft + 'px';
-        topLeft.style.top = exactTop + 'px';
+        topLeft.style.left = safeLeft + 'px';
+        topLeft.style.top = safeTop + 'px';
     }
     if (topRight) {
-        topRight.style.right = exactRight + 'px';
-        topRight.style.top = exactTop + 'px';
+        topRight.style.right = safeRight + 'px';
+        topRight.style.top = safeTop + 'px';
     }
     if (progress) {
-        progress.style.top = exactTop + 'px';
+        progress.style.top = safeTop + 'px';
+        // Ép thanh Progress luôn nằm ngay chính giữa màn hình thiết bị
+        progress.style.left = '50%';
+        progress.style.transform = 'translateX(-50%)';
     }
 }
 

@@ -23,15 +23,20 @@
         body { 
             margin: 0; padding: 0; background-color: #202020; 
             width: 100vw; 
-            height: 100vh; /* Dự phòng cho các trình duyệt cũ */
-            height: calc(var(--vh, 1vh) * 100); /* Ép chiều cao theo kích thước thực tế tính được */
+            height: 100vh; /* Dự phòng */
+            height: calc(var(--vh, 1vh) * 100); /* Ép chiều cao thực tế Safari */
+            position: fixed; /* Khóa trang web, chống trượt */
             overflow: hidden; touch-action: none; font-family: 'Roboto', sans-serif; 
-            display: flex; justify-content: center; align-items: center; 
+            /* BỎ DISPLAY FLEX Ở ĐÂY ĐỂ TRÁNH XUNG ĐỘT PHASER */
         }
         
-        #game-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #000; overflow: hidden; }
-        canvas { display: block; max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
+        #game-container { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; overflow: hidden; 
+            /* BỎ DISPLAY FLEX Ở ĐÂY */
+        }
         
+        canvas { display: block; margin: 0 auto; max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
         .info-input { padding: 12px; margin: 8px; width: 80%; max-width: 300px; min-width: 250px; font-size: 18px; border-radius: 5px; border: 2px solid #fff; background: rgba(255,255,255,0.9); font-family: 'VT323', monospace; box-sizing: border-box; }
         #start-btn { padding: 12px 40px; font-size: 26px; background: #28a745; color: white; border: 4px solid #1e7e34; border-radius: 10px; cursor: pointer; margin-top: 20px; font-family: 'VT323', monospace; margin-bottom: 40px;}
         
