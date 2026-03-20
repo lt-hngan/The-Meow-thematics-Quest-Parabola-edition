@@ -90,31 +90,37 @@
                 <img src="assets/img/menu.png" style="width: 24px; height: 24px; object-fit: contain;">
             </button>
         </div>
-
-        <div id="start-screen">
+<div id="start-screen">
             <div style="display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 50px; background: rgba(0,0,0,0.7); padding: 20px 40px; border-radius: 15px; border: 4px solid #FFD700; box-shadow: 0 10px 30px rgba(0,0,0,0.6); backdrop-filter: blur(5px);">
-                
                 <div style="width: 32px; height: 32px; overflow: hidden; transform: scale(2.5); image-rendering: pixelated;">
                     <img src="assets/img/character/1_Cat_Idle-Sheet.png" style="height: 32px;">
                 </div>
-                
                 <h1 style="margin: 0; padding: 0; font-size: 55px; letter-spacing: 2px; text-align: center;">THE MEOW-THEMATICS QUEST:<br>PARABOLA EDITION</h1>
-                
                 <img src="assets/img/pipe.png" style="width: 48px; height: 48px; transform: scale(1.5); image-rendering: pixelated;">
             </div>
 
-            <div style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.7); padding: 30px; border-radius: 15px; margin-top: 40px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
-                <p style="margin-top: 0; font-size: 26px; color: #FFD700;">Fill in the blanks to start!</p>
+            <p style="font-size: 16px; color: #fff; text-shadow: 1px 1px 0 #000; margin: 15px 0 10px 0; text-align: center; font-family: 'Roboto', sans-serif;">
+                📱 For mobile users, rotate your device horizontally and unmute for full experience.
+            </p>
+
+            <div style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.7); padding: 20px 30px; border-radius: 15px; margin-top: 10px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); text-align: center;">
                 
-                <input type="text" id="info-name" class="info-input" placeholder="Members of group (e.g. Nam, Hoa,...)">
+                <p style="margin: 0 0 15px 0; font-size: 26px; color: #FFD700;">Fill in the blanks to start!</p>
                 
+                <label style="color: #fff; font-size: 16px; margin-bottom: 5px; font-family: 'Roboto', sans-serif;">
+                    Members (full name, separated by &) <br>
+                    <small style="color: #ccc; font-style: italic;">(e.g. Nguyễn Văn A & Trần Thị B)</small>
+                </label>
+                <input type="text" id="info-name" class="info-input" placeholder="Type here...">
+                
+                <label style="color: #fff; font-size: 16px; margin-top: 10px; margin-bottom: 5px; font-family: 'Roboto', sans-serif;">Class</label>
                 <select id="info-class" class="info-input" style="appearance: auto; cursor: pointer;">
                     <option value="" disabled selected>Select Class</option>
-                    <option value="10A">Class 10A</option>
-                    <option value="10B">Class 10B</option>
+                    <option value="10A">10A</option>
+                    <option value="10B">10B</option>
                 </select>
                 
-                <button id="start-btn" onclick="startGame()" style="margin-top: 25px; transition: transform 0.2s;">START GAME</button>
+                <button id="start-btn" onclick="startGame()">PLAY</button>
             </div>
             
             <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 150px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); pointer-events: none; z-index: -1;"></div>
