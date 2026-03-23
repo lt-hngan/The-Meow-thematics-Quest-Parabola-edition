@@ -85,7 +85,7 @@ function generateLevelData() {
     return [
         { 
             id: "Q1", type: "multi_2", level: "Basic", 
-            hint: "The concavity of the graph of the quadratic function \\(y=ax^2+bx+c\\) \\((a \\neq 0)\\) depends on the sign of the coefficient \\(a\\).", 
+            hint: "The concavity of the graph of the function \\(y=ax^2+bx+c\\) \\((a \\neq 0)\\) depends on the sign of the coefficient \\(a\\).", 
             hint_img: "assets/img/Q1_Hint.jpeg",
             question: `Given the quadratic function \\(y = ${eq1}\\). The statement 'The parabola of this function concaves ${dir1}' is true or false?`, 
             options: { A: "True", B: "False" }, correct: "A", 
@@ -195,7 +195,10 @@ let isPaused = false, isMuted = false;
 
 let userInfo = { name: "", class: "", group: "N/A" }; 
 let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0, currentStreak = 0; // <-- THÊM currentStreak
-
+let userInfo = { name: "", class: "", group: "N/A" }; 
+let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0, currentStreak = 0;
+let questionStartTime = 0; // Biến lưu mốc thời gian bắt đầu câu hỏi
+let questionTimes = {};    // Object lưu tổng thời gian cho từng câu
 let questionStats = {};
 for(let i = 1; i <= 9; i++) questionStats["Q" + i] = { wrongCount: 0, wrongAnswers: [] };
 
@@ -243,6 +246,7 @@ function sendLiveUpdate(status) {
         duration: durationStr,
         wrongAnswers: wrongStr,
         reviewTopics: topicsStr,
+        questionTimes: questionTimes,
         lastUpdated: firebase.database.ServerValue.TIMESTAMP
     });
 }
@@ -490,14 +494,14 @@ function create(data) {
     currentRightEdge += gapTut + tutPlatWidth;
 
     // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ 530, 540 thành 560, 570)
-    let tItem = createItem(items, this, tutPlatX - 400, 560); tItem.isTutorial = true; tItem.tutMsg = "This is a hint for you to fight with your enemy.";
+    let tItem = createItem(items, this, tutPlatX - 400, 560); tItem.isTutorial = true; tItem.tutMsg = "This is a hint for you to fight with your enemy. You can scroll inside large pop-ups.";
     createProximityTrigger(triggers, this, tItem.x - 150, tItem);
 
     let tEnemy = createEnemyWithWall(enemies, this, tutPlatX, 570); tEnemy.isTutorial = true;
     tEnemy.dataContent = { id: "T1", type: "multi_2", question: "TUTORIAL: 1 + 1 = ?", options: { A: "2", B: "3" }, correct: "A", explain_1: "Tutorial: 1 + 1 = 2" };
     createProximityTrigger(triggers, this, tEnemy.x - 150, tEnemy);
 
-    let tCheck = createCheckpoint(checkpointsGroup, this, tutPlatX + 400, 570); tCheck.isTutorial = true; tCheck.tutMsg = "This is a checkpoint. If you lose, you will restart from the nearest checkpoint.";
+    let tCheck = createCheckpoint(checkpointsGroup, this, tutPlatX + 400, 570); tCheck.isTutorial = true; tCheck.tutMsg = "This is a checkpoint. If you lose, you will restart from the nearest checkpoint you touched.";
     createProximityTrigger(triggers, this, tCheck.x - 150, tCheck);
 
     // --- MAIN GAME BLOCK ---
@@ -845,6 +849,7 @@ function reachCheckpoint(scene, playerRef, cp) {
 }
 
 function showQuizUI(data, scene, enemy, wall) { 
+    questionStartTime = Date.now();
     currentScene = scene; currentEnemy = enemy; currentWall = wall; currentData = data; 
     let overlay = document.getElementById('quiz-overlay'); overlay.style.borderColor = "#800080"; 
     document.getElementById('quiz-title').innerText = "QUESTION"; document.getElementById('quiz-title').style.color = "#800080"; 
@@ -980,6 +985,9 @@ function resetQuizUIForRetry() {
 // GAMEOVER, LIVES & RESTART
 // ==========================================
 function processResult(isCorrect, userAnswer) { 
+    // Tính số giây đã trôi qua và cộng dồn vào câu hỏi tương ứng
+    let timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+    questionTimes[currentData.id] = (questionTimes[currentData.id] || 0) + timeSpent;
     if (isCorrect) {
         currentStreak++; // <--- CỘNG 1 VÀO CHUỖI THẮNG
         if (currentData.id !== "T1") { 
@@ -1120,25 +1128,10 @@ window.closeGameOverAndRestart = function() {
 
 function showSummaryPopup() {
     let duration = Math.floor((Date.now() - gameStartTime) / 1000); let minutes = Math.floor(duration / 60); let seconds = duration % 60; let timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    
+    // Giao diện tổng kết chính (Chỉ hiện Thời gian và Topic cần ôn)
     let summaryHTML = `<div style="text-align: left; display: inline-block; background: #f8f9fa; padding: 15px; border-radius: 10px; width: 100%; box-sizing: border-box; max-height: 350px; overflow-y: auto; text-shadow: none; color: #333;">`;
     summaryHTML += `<p style="margin-top:0; font-size: 24px; text-shadow: none; color: #000;"><b>⏱ Total Time:</b> <span style="color:#007bff">${timeStr}</span></p>`;
-    let hasWrong = false; let wrongDetails = `<ul style="text-align: left; padding-left: 20px; font-size: 20px;">`;
-    
-    for(let i=1; i<=7; i++) {
-        let qID = "Q" + i; let stats = questionStats[qID];
-        if(stats && stats.wrongCount > 0) {
-            hasWrong = true; let qData = levelData.find(q => q.id === qID); let qText = qData ? qData.question : ""; 
-            
-            let formattedAnswers = stats.wrongAnswers.map(ans => {
-                if (qData && (qData.type === 'multi_4' || qData.type === 'multi_2')) return qData.options[ans];
-                return ans.trim() === "" ? "[blank]" : ans;
-            }).join(" | ");
-            
-           // Đã xóa số lần sai và thêm khoảng cách (margin-top: 10px) trước chữ Your answers
-            wrongDetails += `<li style="margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 10px;"><b>Q${i}:</b> ${qText}<div style="margin-top: 10px; font-size: 18px; color: #dc3545;"><b>Your answers:</b> ${formattedAnswers}</div></li>`;
-        }
-    }
-    wrongDetails += `</ul>`;
     
     let topicsArr = getReviewTopics();
     if(topicsArr.length > 0) {
@@ -1147,18 +1140,26 @@ function showSummaryPopup() {
         summaryHTML += `</ul>`;
     }
     
-    if(hasWrong) summaryHTML += `<p style="font-size: 24px; text-shadow: none; color: #000;"><b>❌ Mistakes Summary:</b></p> ${wrongDetails}`; 
-    else summaryHTML += `<p style="color:#28a745; font-size: 24px; text-shadow: none;"><b>🏆 Perfect Run! No mistakes made!</b></p>`;
+    // Kiểm tra xem có câu nào sai không
+    let hasWrong = false;
+    for(let i=1; i<=7; i++) { if(questionStats["Q"+i] && questionStats["Q"+i].wrongCount > 0) hasWrong = true; }
     
+    if(hasWrong) summaryHTML += `<p style="font-size: 20px; text-shadow: none; color: #dc3545;"><b>❌ You made some mistakes. Review them below!</b></p>`; 
+    else summaryHTML += `<p style="color:#28a745; font-size: 24px; text-shadow: none;"><b>🏆 Perfect Run! No mistakes made!</b></p>`;
     summaryHTML += `</div>`;
+    
     let overlay = document.getElementById('quiz-overlay'); overlay.style.borderColor = "#28a745"; document.getElementById('quiz-title').innerText = "LEVEL CLEARED!"; document.getElementById('quiz-title').style.color = "#28a745"; document.getElementById('quiz-content').innerHTML = summaryHTML; 
     document.getElementById('options-area').style.display = 'none'; document.getElementById('input-area').style.display = 'none'; document.getElementById('hint-area').style.display = 'none'; 
     
     let fbArea = document.getElementById('feedback-area'); let fbMsg = document.getElementById('feedback-message'); fbMsg.innerText = "Results have been sent to your teacher."; fbMsg.className = "correct-text"; fbMsg.style.textShadow = "none"; fbMsg.style.color = "#000"; 
     
-    // HIỆN 2 NÚT REVIEW LÊN
+    // HIỆN CÁC NÚT REVIEW LÊN
     document.getElementById('btn-knowledge-review').style.display = 'inline-block';
     document.getElementById('btn-questions-review').style.display = 'inline-block';
+    
+    // Nếu có lỗi sai thì mới hiện nút Mistake Summary màu đỏ
+    let btnMistake = document.getElementById('btn-mistake-summary');
+    if (btnMistake) btnMistake.style.display = hasWrong ? 'inline-block' : 'none';
 
     let fbBtn = document.getElementById('feedback-btn'); fbBtn.innerText = "Finish & Restart"; fbBtn.onclick = function() { location.reload(); }; 
     fbArea.style.display = 'block'; overlay.style.display = 'block'; if (window.MathJax) MathJax.typesetPromise();
@@ -1231,6 +1232,8 @@ window.addEventListener('orientationchange', () => {
         alignUIToCanvas();
     }, 600); 
 });
+
+
 // ==========================================
 // REVIEW POP-UPS LOGIC
 // ==========================================
@@ -1242,14 +1245,14 @@ window.closeKnowledgeReview = function() {
     document.getElementById('knowledge-review-overlay').style.display = 'none';
 };
 
+// --- CẬP NHẬT: THÊM NÚT EXPLAIN VÀ REPORT VÀO QUESTIONS REVIEW ---
 window.openQuestionsReview = function() {
     let contentDiv = document.getElementById('questions-review-content');
     let html = "";
     
     levelData.forEach((q, index) => {
+        let qID = q.id;
         html += `<div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; text-align: left;">`;
-        
-        // Ép font Roboto và bỏ bóng mờ cho câu hỏi
         html += `<p style="margin: 0 0 10px 0; font-size: 20px; font-family: 'Roboto', sans-serif; text-shadow: none; color: #333; text-align: left;"><b>Question ${index + 1}:</b> ${q.question}</p>`;
         
         let correctText = "";
@@ -1259,18 +1262,130 @@ window.openQuestionsReview = function() {
             correctText = q.correct.join(" or ");
         }
         
-        // Ép font Roboto và bỏ bóng mờ cho đáp án
         html += `<p style="margin: 0; color: #28a745; font-size: 18px; font-family: 'Roboto', sans-serif; text-shadow: none; text-align: left;"><b>✅ Correct Answer:</b> ${correctText}</p>`;
+        
+        // Cụm 2 nút bấm (Explain & Report)
+        html += `<div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">`;
+        html += `<button onclick="document.getElementById('explain-review-${qID}').style.display='block'; this.style.display='none';" style="padding: 8px 15px; font-size: 16px; background: #ffc107; color: #000; border: 2px solid #e0a800; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Roboto', sans-serif; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Show Explanation 💡</button>`;
+        html += `<button onclick="openReportPopup('${qID}')" style="padding: 8px 15px; font-size: 16px; background: #dc3545; color: #fff; border: 2px solid #c82333; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Roboto', sans-serif; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Report 🚩</button>`;
+        html += `</div>`;
+
+        // Nội dung Explain (Ẩn mặc định)
+        html += `<div id="explain-review-${qID}" style="display:none; margin-top: 15px; padding: 15px; background: #fff3cd; border-left: 5px solid #ffc107; font-size: 18px; font-family: 'Roboto', sans-serif; color: #856404; text-shadow: none; border-radius: 5px;">
+                    <b>Explanation:</b> ${q.explain_3}
+                 </div>`;
+        
         html += `</div>`;
     });
     
     contentDiv.innerHTML = html;
     document.getElementById('questions-review-overlay').style.display = 'block';
-    
     if (window.MathJax) MathJax.typesetPromise(); 
 };
 
 window.closeQuestionsReview = function() {
     document.getElementById('questions-review-overlay').style.display = 'none';
+};
+
+// --- CẬP NHẬT: THÊM NÚT REPORT VÀO MISTAKE SUMMARY ---
+window.openMistakeSummary = function() {
+    let contentDiv = document.getElementById('mistake-summary-content');
+    let html = "";
+    
+    for(let i=1; i<=7; i++) {
+        let qID = "Q" + i; 
+        let stats = questionStats[qID];
+        if(stats && stats.wrongCount > 0) {
+            let qData = levelData.find(q => q.id === qID); 
+            let qText = qData ? qData.question : ""; 
+            
+            let formattedAnswers = stats.wrongAnswers.map(ans => {
+                if (qData && (qData.type === 'multi_4' || qData.type === 'multi_2')) return qData.options[ans];
+                return ans.trim() === "" ? "[blank]" : ans;
+            }).join(" | ");
+            
+            html += `<div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; text-align: left;">`;
+            html += `<p style="margin: 0 0 10px 0; font-size: 20px; font-family: 'Roboto', sans-serif; color: #333; text-shadow: none;"><b>Question ${i}:</b> ${qText}</p>`;
+            html += `<p style="margin: 0 0 10px 0; font-size: 18px; color: #dc3545; font-family: 'Roboto', sans-serif; text-shadow: none;"><b>❌ Your answers:</b> ${formattedAnswers}</p>`;
+            
+            // Cụm 2 nút bấm (Explain & Report)
+            html += `<div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">`;
+            html += `<button onclick="document.getElementById('explain-mistake-${qID}').style.display='block'; this.style.display='none';" style="padding: 8px 15px; font-size: 16px; background: #ffc107; color: #000; border: 2px solid #e0a800; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Roboto', sans-serif; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Show Explanation 💡</button>`;
+            html += `<button onclick="openReportPopup('${qID}')" style="padding: 8px 15px; font-size: 16px; background: #dc3545; color: #fff; border: 2px solid #c82333; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Roboto', sans-serif; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Report 🚩</button>`;
+            html += `</div>`;
+            
+            // Nội dung Explain (Ẩn mặc định)
+            html += `<div id="explain-mistake-${qID}" style="display:none; margin-top: 15px; padding: 15px; background: #fff3cd; border-left: 5px solid #ffc107; font-size: 18px; font-family: 'Roboto', sans-serif; color: #856404; text-shadow: none; border-radius: 5px;">
+                        <b>Explanation:</b> ${qData.explain_3}
+                     </div>`;
+            
+            html += `</div>`;
+        }
+    }
+    
+    contentDiv.innerHTML = html;
+    document.getElementById('mistake-summary-overlay').style.display = 'block';
+    if (window.MathJax) MathJax.typesetPromise(); 
+};
+
+window.closeMistakeSummary = function() {
+    document.getElementById('mistake-summary-overlay').style.display = 'none';
+};
+
+// ==========================================
+// LÝ THUYẾT: REPORT LOGIC (FIREBASE)
+// ==========================================
+let currentReportQID = null;
+
+// Bước 1: Mở pop-up giải thích
+window.openReportPopup = function(qID) {
+    currentReportQID = qID;
+    document.getElementById('report-confirm-overlay').style.display = 'block';
+};
+
+window.closeReportPopup = function() {
+    currentReportQID = null;
+    document.getElementById('report-confirm-overlay').style.display = 'none';
+};
+
+// Bước 2: Học sinh xác nhận -> Chuyển sang Pop-up điền lý do
+window.proceedToReportReason = function() {
+    document.getElementById('report-confirm-overlay').style.display = 'none';
+    document.getElementById('report-reason-input').value = ""; // Xóa ô nhập text cũ
+    document.getElementById('report-reason-overlay').style.display = 'block';
+};
+
+window.closeReportReasonPopup = function() {
+    currentReportQID = null;
+    document.getElementById('report-reason-overlay').style.display = 'none';
+};
+
+// Bước 3: Gửi báo cáo lên Firebase
+window.sendFinalReport = function() {
+    if (!currentReportQID) return;
+    
+    let reasonText = document.getElementById('report-reason-input').value.trim();
+    if (reasonText === "") {
+        alert("Please enter a reason before sending!");
+        return;
+    }
+    
+    // Lấy nội dung câu hỏi để giáo viên dễ đọc trên Dashboard
+    let qData = levelData.find(q => q.id === currentReportQID);
+    let qText = qData ? qData.question : "Unknown Question";
+
+    // Đẩy dữ liệu report lên Firebase
+    db.ref('reports/' + userId + "_" + currentReportQID).set({
+        name: userInfo.name,
+        class: userInfo.class,
+        questionId: currentReportQID,
+        questionText: qText,
+        reason: reasonText,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    alert("Report sent successfully! Your teacher will review it soon.");
+    document.getElementById('report-reason-overlay').style.display = 'none';
+    currentReportQID = null;
 };
 window.addEventListener(alignUIToCanvas);
