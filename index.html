@@ -56,11 +56,21 @@
         .correct-text { color: #28a745; font-family: 'VT323', monospace; font-size: 26px !important; }
         .wrong-text { color: #dc3545; font-family: 'Roboto', sans-serif; font-size: 18px; }
 
-        /* 2. ĐÂY LÀ PHẦN LÀM NÉT THANH MẠNG VÀ NÚT BẤM (MỚI THÊM) */
-        #hud-lives img { width: 24px !important; height: 24px !important; image-rendering: pixelated; }
-        #hud-progress img { width: 32px !important; height: 32px !important; image-rendering: pixelated; }
-        .hud-btn { width: 32px !important; height: 32px !important; }
-        .hud-btn img { width: 20px !important; height: 20px !important; image-rendering: pixelated; }
+        /* ======================================================== */
+        /* BỘ LỆNH ÉP PIXEL SẮC NÉT CHO MỌI TRÌNH DUYỆT (KỂ CẢ SAFARI) */
+        /* ======================================================== */
+        #hud-lives img, .hud-btn img, #hud-progress img {
+            image-rendering: -moz-crisp-edges;         /* Dành cho Firefox */
+            image-rendering: -webkit-optimize-contrast; /* Dành cho Safari và iOS cũ */
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;                /* Chuẩn chung hiện đại */
+        }
+
+        /* Tăng kích thước gốc trên PC */
+        .hud-btn { background: transparent; border: none; cursor: pointer; transition: 0.2s; padding: 0; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; margin-left: 10px; }
+        .hud-btn img { width: 36px; height: 36px; }
+        #hud-lives img { width: 36px; height: 36px; object-fit: contain; }
+        #hud-progress img { width: 44px; height: 44px; object-fit: contain; }
 
         /* 3. ĐÂY LÀ PHẦN RESPONSIVE CHO ĐIỆN THOẠI (Ngang) */
         @media screen and (max-height: 450px) {
@@ -85,6 +95,7 @@
                 margin-top: 10px !important; 
             }
             
+
             #quiz-title { font-size: 24px !important; margin-bottom: 5px !important; padding-bottom: 5px !important; }
             #quiz-content { margin-bottom: 8px !important; font-size: 18px !important; }
             .option-btn { padding: 8px 10px !important; margin: 5px 0 !important; font-size: 16px !important; }
@@ -97,12 +108,14 @@
             #pause-menu h2 { font-size: 32px !important; margin-bottom: 10px !important; text-shadow: 2px 2px 0 #800080 !important; }
             .pause-btn { padding: 8px 20px !important; margin: 5px !important; font-size: 18px !important; width: 85% !important; max-width: 300px !important; }
 
-            /* Thu nhỏ HUD xuống thêm một bậc nữa trên điện thoại ngang */
-            #hud-lives img { width: 20px !important; height: 20px !important; }
-            .hud-btn { width: 28px !important; height: 28px !important; }
-            .hud-btn img { width: 20px !important; height: 20px !important; }
-            #hud-progress img { width: 26px !important; height: 26px !important; }
-            #progress-fill { height: 14px !important; }
+            /* Kích thước to, rõ ràng và DỄ BẤM trên mobile (Đã được chống mờ) */
+            #hud-lives img { width: 30px !important; height: 30px !important; }
+            
+            .hud-btn { width: 42px !important; height: 42px !important; }
+            .hud-btn img { width: 28px !important; height: 28px !important; }
+            
+            #hud-progress img { width: 36px !important; height: 36px !important; }
+            #progress-fill { height: 18px !important; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
