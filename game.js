@@ -454,7 +454,7 @@ function create(data) {
     let randomizedData = globalRandomizedData;
 
     const mapLength = levelData.length * 2500 + 4000;
-    this.physics.world.setBounds(0, 0, mapLength, 800);
+    this.physics.world.setBounds(0, 0, mapLength, 650);
 
     this.add.image(0, 0, 'bg_sky').setOrigin(0, 0).setScrollFactor(0).setDisplaySize(1066, 600);
 
@@ -561,9 +561,9 @@ function create(data) {
     let gapEnd = 200;
     let endPlatWidth = 191 * 5; 
     let endPlatX = currentRightEdge + gapEnd + endPlatWidth / 2;
-    createPlatform(platforms, this, endPlatX, 580, endPlatWidth);
+    createPlatform(platforms, this, endPlatX, 500, endPlatWidth);
     
-    let visualPipe = this.add.image(endPlatX + 250, 568, 'pipe'); 
+    let visualPipe = this.add.image(endPlatX + 250, 488, 'pipe'); 
     visualPipe.setOrigin(0.5, 1); 
     visualPipe.setScale(2.2); 
     let finishLine = this.add.rectangle(endPlatX + 250, 300, 60, 1000, 0x000000); 
@@ -581,7 +581,7 @@ function create(data) {
     player = this.physics.add.sprite(100, 450, 'cat_idle');
     player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2.3); 
 
-    this.cameras.main.setBounds(0, 0, mapLength, 800);
+    this.cameras.main.setBounds(0, 0, mapLength, 650);
     
     // Tăng tốc độ bám theo trục dọc (lerpY từ 0.05 lên 0.15) để camera đuổi theo nhanh hơn
    this.cameras.main.startFollow(player, true, 1, 0.1);
@@ -604,7 +604,7 @@ this.cameras.main.setDeadzone(0, 150);
     let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
 if (isMobile) {
     this.cameras.main.setZoom(1.25); 
-    this.cameras.main.setFollowOffset(-150, 150); // Đẩy góc nhìn mobile xuống ground
+    this.cameras.main.setFollowOffset(-150, 60); // Đẩy góc nhìn mobile xuống ground
 }
 
     this.input.on('pointerdown', () => jump(this)); 
@@ -620,7 +620,7 @@ function update() {
         return; 
     }
     if (isGameOver) return;
-    if (player.y > 750) takeEnvironmentalDamage(this, player);
+    if (player.y > 650) takeEnvironmentalDamage(this, player);
     
     if (isCutscene) {
         player.setVelocityX(0); 
