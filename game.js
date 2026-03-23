@@ -388,7 +388,6 @@ function preload() {
 
     this.load.image('ground', 'assets/img/ground.png');
     this.load.image('enemy', 'assets/img/enemy.png');
-    this.load.image('spike', 'assets/img/spike.png');
     this.load.image('item', 'assets/img/item.png');
     this.load.image('pipe', 'assets/img/pipe.png');
     this.load.image('checkpoint', 'assets/img/checkpoint.png'); 
@@ -455,7 +454,7 @@ function create(data) {
     let randomizedData = globalRandomizedData;
 
     const mapLength = levelData.length * 2500 + 4000;
-    this.physics.world.setBounds(0, 0, mapLength, 650);
+    this.physics.world.setBounds(0, 0, mapLength, 800);
 
     this.add.image(0, 0, 'bg_sky').setOrigin(0, 0).setScrollFactor(0).setDisplaySize(1066, 600);
 
@@ -467,7 +466,6 @@ function create(data) {
     createParallaxLayer(this, 'bg_bush', 0.8, mapLength, 0);  
 
     const platforms = this.physics.add.staticGroup();
-    const spikes = this.physics.add.staticGroup();
     const enemies = this.physics.add.staticGroup();
     const items = this.physics.add.staticGroup();
     const checkpointsGroup = this.physics.add.staticGroup();
@@ -558,7 +556,6 @@ function create(data) {
             currentRightEdge = safeX + safeWidth / 2;
         }
 
-        if (Math.random() > 0.4) createSpike(spikes, this, itemPlatX + gap2/2, 650);
     });
 
     let gapEnd = 200;
@@ -584,7 +581,7 @@ function create(data) {
     player = this.physics.add.sprite(100, 450, 'cat_idle');
     player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2.3); 
 
-    this.cameras.main.setBounds(0, 0, mapLength, 650);
+    this.cameras.main.setBounds(0, 0, mapLength, 600);
     
     // Tăng tốc độ bám theo trục dọc (lerpY từ 0.05 lên 0.15) để camera đuổi theo nhanh hơn
    this.cameras.main.startFollow(player, true, 1, 0.1);
@@ -597,7 +594,6 @@ this.cameras.main.setDeadzone(0, 150);
     }
 
     this.physics.add.collider(player, platforms);
-    this.physics.add.overlap(player, spikes, (p, s) => takeEnvironmentalDamage(this, p));
     this.physics.add.overlap(player, items, (p, i) => collectItem(this, p, i));
     this.physics.add.overlap(player, enemies, (p, e) => meetEnemy(this, p, e));
     this.physics.add.overlap(player, finishLine, (p, f) => winGame(this, p, f));
@@ -608,7 +604,7 @@ this.cameras.main.setDeadzone(0, 150);
     let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
 if (isMobile) {
     this.cameras.main.setZoom(1.25); 
-    this.cameras.main.setFollowOffset(-150, 60); // Đẩy góc nhìn mobile xuống ground
+    this.cameras.main.setFollowOffset(-150, 150); // Đẩy góc nhìn mobile xuống ground
 }
 
     this.input.on('pointerdown', () => jump(this)); 
@@ -624,7 +620,7 @@ function update() {
         return; 
     }
     if (isGameOver) return;
-    if (player.y > 650) takeEnvironmentalDamage(this, player);
+    if (player.y > 750) takeEnvironmentalDamage(this, player);
     
     if (isCutscene) {
         player.setVelocityX(0); 
@@ -686,7 +682,6 @@ function createParallaxLayer(scene, key, scrollFactor, mapWidth, yOffset = 0) {
     bg.setScale(scaleY); 
 }
 function createPlatform(group, scene, x, y, width) { let plat = scene.add.tileSprite(x, y + 20, width, 64, 'ground'); scene.physics.add.existing(plat, true); plat.body.setSize(width, 64); plat.body.setOffset(0, 10); group.add(plat); return plat; }
-function createSpike(group, scene, x, y) { let spike = scene.add.image(x, y - 25, 'spike'); spike.setScale(1.5); scene.physics.add.existing(spike, true); spike.body.setSize(spike.width * 0.8, spike.height * 0.8); group.add(spike); }
 function createItem(group, scene, x, y) { 
     let item = scene.add.image(x, y - 5, 'item'); 
     item.setScale(1.3); // Phóng to 30%
