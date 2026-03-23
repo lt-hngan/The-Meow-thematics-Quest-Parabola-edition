@@ -195,8 +195,6 @@ let isPaused = false, isMuted = false;
 
 let userInfo = { name: "", class: "", group: "N/A" }; 
 let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0, currentStreak = 0; // <-- THÊM currentStreak
-let userInfo = { name: "", class: "", group: "N/A" }; 
-let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0, currentStreak = 0;
 let questionStartTime = 0; // Biến lưu mốc thời gian bắt đầu câu hỏi
 let questionTimes = {};    // Object lưu tổng thời gian cho từng câu
 let questionStats = {};
