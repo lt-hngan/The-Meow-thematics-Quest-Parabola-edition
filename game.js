@@ -583,8 +583,13 @@ function create(data) {
     player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2); 
 
     this.cameras.main.setBounds(0, 0, mapLength, 600);
-    this.cameras.main.startFollow(player);
+    // Cấu hình camera: bám sát chiều ngang (lerpX = 1), nhưng đi theo chiều dọc rất mượt và chậm (lerpY = 0.05)
+    this.cameras.main.startFollow(player, true, 1, 0.05);
     this.cameras.main.setFollowOffset(-200, 0);
+    
+    // Thêm vùng chết (Deadzone) chiều dọc là 150px. 
+    // Nhân vật nhảy lên/xuống trong khoảng 150px này camera sẽ không bị rung lắc.
+    this.cameras.main.setDeadzone(0, 150);
 
     if (data && data.isCheckpointRestart && savedCheckpoint) {
         player.x = savedCheckpoint.x; player.y = savedCheckpoint.y;

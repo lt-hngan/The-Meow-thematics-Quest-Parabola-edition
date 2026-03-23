@@ -69,16 +69,21 @@
             #start-screen input, #start-screen select { font-size: 16px !important; padding: 10px !important; margin-bottom: 15px !important; }
             #start-btn { font-size: 24px !important; padding: 10px !important; }
             
-            /* Ép Pop-up gọn lại, cho phép scroll mượt mà nếu nội dung dài */
+            /* Ép Pop-up ngắn lại (chỉ chiếm tối đa 70% chiều cao màn hình) để không bao giờ chạm viền */
             #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay { 
-                max-height: 85vh !important; 
+                max-height: 70vh !important; 
                 width: 90% !important; 
                 padding: 15px !important;
-                overflow-y: auto !important; /* Đảm bảo có thể cuộn lên xuống */
+                overflow-y: auto !important; /* Bật thanh cuộn mượt mà bên trong */
+                border-radius: 10px !important; /* Bo góc mượt hơn trên mobile */
             }
             
-            /* Bóp chiều cao ảnh trong Hint/Câu hỏi để không đẩy các nút bấm văng ra ngoài */
-            #quiz-content img { max-height: 110px !important; width: auto !important; margin-top: 10px !important; }
+            /* Trả lại tỷ lệ tự nhiên cho ảnh, ảnh sẽ tự động thu lọt lòng khung width, cuộn để xem */
+            #quiz-content img { 
+                max-width: 100% !important; 
+                height: auto !important; 
+                margin-top: 10px !important; 
+            }
             
             #quiz-title { font-size: 24px !important; margin-bottom: 5px !important; padding-bottom: 5px !important; }
             #quiz-content { margin-bottom: 8px !important; font-size: 18px !important; }
