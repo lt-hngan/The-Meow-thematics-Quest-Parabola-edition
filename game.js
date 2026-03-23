@@ -585,13 +585,15 @@ function create(data) {
     player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2); 
 
     this.cameras.main.setBounds(0, 0, mapLength, 600);
-    // Cấu hình camera: bám sát chiều ngang (lerpX = 1), nhưng đi theo chiều dọc rất mượt và chậm (lerpY = 0.05)
-    this.cameras.main.startFollow(player, true, 1, 0.05);
-    this.cameras.main.setFollowOffset(-200, 0);
     
-    // Thêm vùng chết (Deadzone) chiều dọc là 150px. 
-    // Nhân vật nhảy lên/xuống trong khoảng 150px này camera sẽ không bị rung lắc.
-    this.cameras.main.setDeadzone(0, 150);
+    // Tăng tốc độ bám theo trục dọc (lerpY từ 0.05 lên 0.15) để camera đuổi theo nhanh hơn
+    this.cameras.main.startFollow(player, true, 1, 0.15);
+    
+    // Đẩy ống kính nhìn xuống dưới 50px để thấy rõ ground bên dưới
+    this.cameras.main.setFollowOffset(-200, 50); 
+    
+    // Thu nhỏ vùng chết xuống còn 50px (nhân vật rớt quá 50px là camera sẽ chạy theo ngay)
+    this.cameras.main.setDeadzone(0, 50);
 
     if (data && data.isCheckpointRestart && savedCheckpoint) {
         player.x = savedCheckpoint.x; player.y = savedCheckpoint.y;
@@ -605,15 +607,14 @@ function create(data) {
     this.physics.add.overlap(player, finishLine, (p, f) => winGame(this, p, f));
     this.physics.add.overlap(player, checkpointsGroup, (p, cp) => reachCheckpoint(this, p, cp));
     this.physics.add.overlap(player, triggers, (p, t) => triggerOverlap(this, p, t));
-    // ===== ĐOẠN CODE THÊM VÀO ĐỂ PHÓNG TO GAME TRÊN MOBILE =====
+
+    // ===== ĐOẠN CODE PHÓNG TO GAME TRÊN MOBILE =====
     let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
     if (isMobile) {
-        this.cameras.main.setZoom(1.25); // Phóng to toàn bộ vạn vật lên 25%
-        // Tinh chỉnh lại góc nhìn camera để nhân vật không bị khuất khi phóng to
-        this.cameras.main.setFollowOffset(-150, 50); 
+        this.cameras.main.setZoom(1.25); 
+        // Khi zoom lên, đẩy camera nhìn sâu xuống dưới thêm một chút nữa (80px)
+        this.cameras.main.setFollowOffset(-150, 80); 
     }
-    // ==============================================================
-
 
     this.input.on('pointerdown', () => jump(this)); 
     cursors = this.input.keyboard.createCursorKeys();
@@ -1159,7 +1160,14 @@ function showSummaryPopup() {
     let btnMistake = document.getElementById('btn-mistake-summary');
     if (btnMistake) btnMistake.style.display = hasWrong ? 'inline-block' : 'none';
 
-    let fbBtn = document.getElementById('feedback-btn'); fbBtn.innerText = "Finish & Restart"; fbBtn.onclick = function() { location.reload(); }; 
+    // Cấu hình nút Finish & Restart thành màu vàng
+    let fbBtn = document.getElementById('feedback-btn'); 
+    fbBtn.innerText = "Finish & Restart"; 
+    fbBtn.style.background = "#ffc107";
+    fbBtn.style.color = "#000";
+    fbBtn.style.border = "2px solid #e0a800";
+    fbBtn.onclick = function() { location.reload(); }; 
+    
     fbArea.style.display = 'block'; overlay.style.display = 'block'; if (window.MathJax) MathJax.typesetPromise();
 }
 
