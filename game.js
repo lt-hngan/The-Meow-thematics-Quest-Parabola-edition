@@ -581,7 +581,7 @@ function create(data) {
     player = this.physics.add.sprite(100, 450, 'cat_idle');
     player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2.3); 
 
-    this.cameras.main.setBounds(0, 0, mapLength, 600);
+    this.cameras.main.setBounds(0, 0, mapLength, 800);
     
     // Tăng tốc độ bám theo trục dọc (lerpY từ 0.05 lên 0.15) để camera đuổi theo nhanh hơn
    this.cameras.main.startFollow(player, true, 1, 0.1);
