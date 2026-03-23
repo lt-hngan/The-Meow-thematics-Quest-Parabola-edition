@@ -455,7 +455,7 @@ function create(data) {
     let randomizedData = globalRandomizedData;
 
     const mapLength = levelData.length * 2500 + 4000;
-    this.physics.world.setBounds(0, 0, mapLength, 800);
+    this.physics.world.setBounds(0, 0, mapLength, 650);
 
     this.add.image(0, 0, 'bg_sky').setOrigin(0, 0).setScrollFactor(0).setDisplaySize(1066, 600);
 
@@ -568,7 +568,7 @@ function create(data) {
     
     let visualPipe = this.add.image(endPlatX + 250, 568, 'pipe'); 
     visualPipe.setOrigin(0.5, 1); 
-    visualPipe.setScale(1.75); 
+    visualPipe.setScale(2.2); 
     let finishLine = this.add.rectangle(endPlatX + 250, 300, 60, 1000, 0x000000); 
     finishLine.setVisible(false); 
     this.physics.add.existing(finishLine, true);
@@ -582,18 +582,14 @@ function create(data) {
     }
 
     player = this.physics.add.sprite(100, 450, 'cat_idle');
-    player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2); 
+    player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2.3); 
 
-    this.cameras.main.setBounds(0, 0, mapLength, 600);
+    this.cameras.main.setBounds(0, 0, mapLength, 650);
     
     // Tăng tốc độ bám theo trục dọc (lerpY từ 0.05 lên 0.15) để camera đuổi theo nhanh hơn
-    this.cameras.main.startFollow(player, true, 1, 0.15);
-    
-    // Đẩy ống kính nhìn xuống dưới 50px để thấy rõ ground bên dưới
-    this.cameras.main.setFollowOffset(-200, 50); 
-    
-    // Thu nhỏ vùng chết xuống còn 50px (nhân vật rớt quá 50px là camera sẽ chạy theo ngay)
-    this.cameras.main.setDeadzone(0, 50);
+   this.cameras.main.startFollow(player, true, 1, 0.1);
+this.cameras.main.setFollowOffset(-200, 100); // Ép camera nhìn hẳn xuống ground
+this.cameras.main.setDeadzone(0, 150);
 
     if (data && data.isCheckpointRestart && savedCheckpoint) {
         player.x = savedCheckpoint.x; player.y = savedCheckpoint.y;
@@ -610,11 +606,10 @@ function create(data) {
 
     // ===== ĐOẠN CODE PHÓNG TO GAME TRÊN MOBILE =====
     let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
-    if (isMobile) {
-        this.cameras.main.setZoom(1.25); 
-        // Khi zoom lên, đẩy camera nhìn sâu xuống dưới thêm một chút nữa (80px)
-        this.cameras.main.setFollowOffset(-150, 80); 
-    }
+if (isMobile) {
+    this.cameras.main.setZoom(1.25); 
+    this.cameras.main.setFollowOffset(-150, 60); // Đẩy góc nhìn mobile xuống ground
+}
 
     this.input.on('pointerdown', () => jump(this)); 
     cursors = this.input.keyboard.createCursorKeys();
@@ -692,11 +687,26 @@ function createParallaxLayer(scene, key, scrollFactor, mapWidth, yOffset = 0) {
 }
 function createPlatform(group, scene, x, y, width) { let plat = scene.add.tileSprite(x, y + 20, width, 64, 'ground'); scene.physics.add.existing(plat, true); plat.body.setSize(width, 64); plat.body.setOffset(0, 10); group.add(plat); return plat; }
 function createSpike(group, scene, x, y) { let spike = scene.add.image(x, y - 25, 'spike'); spike.setScale(1.5); scene.physics.add.existing(spike, true); spike.body.setSize(spike.width * 0.8, spike.height * 0.8); group.add(spike); }
-function createItem(group, scene, x, y) { let item = scene.add.image(x, y, 'item'); scene.physics.add.existing(item, true); scene.tweens.add({ targets: item, y: y - 15, duration: 1000, yoyo: true, repeat: -1 }); group.add(item); return item; }
-function createEnemyWithWall(group, scene, x, y) { let enemyVisual = scene.add.image(x, y - 10, 'enemy'); let invisibleWall = scene.add.rectangle(x, y - 500, 60, 1000, 0x000000); invisibleWall.setVisible(false); scene.physics.add.existing(enemyVisual, true); scene.physics.add.existing(invisibleWall, true); group.add(enemyVisual); group.add(invisibleWall); enemyVisual.wall = invisibleWall; invisibleWall.visual = enemyVisual; return enemyVisual; }
+function createItem(group, scene, x, y) { 
+    let item = scene.add.image(x, y - 5, 'item'); 
+    item.setScale(1.3); // Phóng to 30%
+    scene.physics.add.existing(item, true); 
+    scene.tweens.add({ targets: item, y: y - 20, duration: 1000, yoyo: true, repeat: -1 }); 
+    group.add(item); 
+    return item; 
+}
+function createEnemyWithWall(group, scene, x, y) { 
+    let enemyVisual = scene.add.image(x, y - 20, 'enemy'); 
+    enemyVisual.setScale(1.3); // Phóng to 30%
+    let invisibleWall = scene.add.rectangle(x, y - 500, 60, 1000, 0x000000); invisibleWall.setVisible(false); 
+    scene.physics.add.existing(enemyVisual, true); scene.physics.add.existing(invisibleWall, true); 
+    group.add(enemyVisual); group.add(invisibleWall); enemyVisual.wall = invisibleWall; invisibleWall.visual = enemyVisual; 
+    return enemyVisual; 
+}
 function createCheckpoint(group, scene, x, y) { 
-    let cp = scene.add.image(x, y - 10, 'checkpoint'); 
-    cp.setScale(1.0); scene.physics.add.existing(cp, true); group.add(cp); return cp; 
+    let cp = scene.add.image(x, y - 20, 'checkpoint'); 
+    cp.setScale(1.3); // Phóng to 30%
+    scene.physics.add.existing(cp, true); group.add(cp); return cp; 
 }
 function createProximityTrigger(group, scene, x, targetObj) { 
     let trig = scene.add.rectangle(x, 400, 20, 800); 
