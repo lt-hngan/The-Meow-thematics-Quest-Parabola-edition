@@ -475,10 +475,10 @@ function create(data) {
 
     // --- TUTORIAL BLOCK ---
     let startPlatWidth = 800;
-    createPlatform(platforms, this, startPlatWidth/2, 580, startPlatWidth);
+    createPlatform(platforms, this, startPlatWidth/2, 520, startPlatWidth);
     currentRightEdge = startPlatWidth;
 
-    let jumpTrigger = this.add.rectangle(currentRightEdge - 50, 400, 20, 800);
+    let jumpTrigger = this.add.rectangle(currentRightEdge - 50, 340, 20, 800);
     this.physics.add.existing(jumpTrigger, true); 
     jumpTrigger.isJumpTrigger = true; 
     triggers.add(jumpTrigger);
@@ -486,18 +486,18 @@ function create(data) {
     let gapTut = 150;
     let tutPlatWidth = 1500;
     let tutPlatX = currentRightEdge + gapTut + tutPlatWidth/2;
-    createPlatform(platforms, this, tutPlatX, 580, tutPlatWidth);
+    createPlatform(platforms, this, tutPlatX, 520, tutPlatWidth);
     currentRightEdge += gapTut + tutPlatWidth;
 
     // ĐÃ HẠ ĐỘ CAO XUỐNG (Từ 530, 540 thành 560, 570)
-    let tItem = createItem(items, this, tutPlatX - 400, 560); tItem.isTutorial = true; tItem.tutMsg = "This is a hint for you to fight with your enemy. You can scroll inside large pop-ups.";
+    let tItem = createItem(items, this, tutPlatX - 400, 500); tItem.isTutorial = true; tItem.tutMsg = "This is a hint for you to fight with your enemy. You can scroll inside large pop-ups.";
     createProximityTrigger(triggers, this, tItem.x - 150, tItem);
 
-    let tEnemy = createEnemyWithWall(enemies, this, tutPlatX, 570); tEnemy.isTutorial = true;
+    let tEnemy = createEnemyWithWall(enemies, this, tutPlatX, 510); tEnemy.isTutorial = true;
     tEnemy.dataContent = { id: "T1", type: "multi_2", question: "TUTORIAL: 1 + 1 = ?", options: { A: "2", B: "3" }, correct: "A", explain_1: "Tutorial: 1 + 1 = 2" };
     createProximityTrigger(triggers, this, tEnemy.x - 150, tEnemy);
 
-    let tCheck = createCheckpoint(checkpointsGroup, this, tutPlatX + 400, 570); tCheck.isTutorial = true; tCheck.tutMsg = "This is a checkpoint. If you lose, you will restart from the nearest checkpoint you touched.";
+    let tCheck = createCheckpoint(checkpointsGroup, this, tutPlatX + 400, 510); tCheck.isTutorial = true; tCheck.tutMsg = "This is a checkpoint. If you lose, you will restart from the nearest checkpoint you touched.";
     createProximityTrigger(triggers, this, tCheck.x - 150, tCheck);
 
     // --- MAIN GAME BLOCK ---
@@ -505,7 +505,7 @@ function create(data) {
         let gap1 = 150 + Math.random() * 100;
         let itemPlatWidth = 191 * 2; 
         let itemPlatX = currentRightEdge + gap1 + itemPlatWidth / 2;
-        let itemPlatY = 350 + Math.random() * 100;
+        let itemPlatY = 340 + Math.random() * 100;
         createPlatform(platforms, this, itemPlatX, itemPlatY, itemPlatWidth);
         currentRightEdge = itemPlatX + itemPlatWidth / 2;
 
@@ -561,12 +561,12 @@ function create(data) {
     let gapEnd = 200;
     let endPlatWidth = 191 * 5; 
     let endPlatX = currentRightEdge + gapEnd + endPlatWidth / 2;
-    createPlatform(platforms, this, endPlatX, 500, endPlatWidth);
+    createPlatform(platforms, this, endPlatX, 440, endPlatWidth);
     
-    let visualPipe = this.add.image(endPlatX + 250, 488, 'pipe'); 
+    let visualPipe = this.add.image(endPlatX + 250, 428, 'pipe'); 
     visualPipe.setOrigin(0.5, 1); 
     visualPipe.setScale(2.2); 
-    let finishLine = this.add.rectangle(endPlatX + 250, 300, 60, 1000, 0x000000); 
+    let finishLine = this.add.rectangle(endPlatX + 250, 240, 60, 1000, 0x000000); 
     finishLine.setVisible(false); 
     this.physics.add.existing(finishLine, true);
 
@@ -578,7 +578,7 @@ function create(data) {
         this.anims.create({ key: 'attack', frames: this.anims.generateFrameNumbers('cat_attack', { start: 0, end: 5 }), frameRate: 15, repeat: 0 });
     }
 
-    player = this.physics.add.sprite(100, 450, 'cat_idle');
+    player = this.physics.add.sprite(100, 390, 'cat_idle');
     player.setBounce(0); player.setCollideWorldBounds(true); player.setScale(2.3); 
 
     this.cameras.main.setBounds(0, 0, mapLength, 650);
