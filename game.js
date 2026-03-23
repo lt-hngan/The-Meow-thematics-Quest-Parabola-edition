@@ -505,7 +505,7 @@ function create(data) {
         let gap1 = 150 + Math.random() * 100;
         let itemPlatWidth = 191 * 2; 
         let itemPlatX = currentRightEdge + gap1 + itemPlatWidth / 2;
-        let itemPlatY = 400 + Math.random() * 100;
+        let itemPlatY = 350 + Math.random() * 100;
         createPlatform(platforms, this, itemPlatX, itemPlatY, itemPlatWidth);
         currentRightEdge = itemPlatX + itemPlatWidth / 2;
 
