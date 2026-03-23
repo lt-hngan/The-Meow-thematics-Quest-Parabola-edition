@@ -62,31 +62,40 @@
         .hud-btn { width: 32px !important; height: 32px !important; }
         .hud-btn img { width: 20px !important; height: 20px !important; image-rendering: pixelated; }
 
-        /* 3. ĐÂY LÀ PHẦN RESPONSIVE CHO ĐIỆN THOẠI (Bóp nhỏ pop-up nhưng giữ nguyên font chữ) */
+        /* 3. ĐÂY LÀ PHẦN RESPONSIVE CHO ĐIỆN THOẠI (Ngang) */
         @media screen and (max-height: 450px) {
             #start-screen h1 { font-size: 35px !important; }
             #mobile-warning { font-size: 13px !important; padding: 5px 10px !important; margin: 10px 0 !important;}
             #start-screen input, #start-screen select { font-size: 16px !important; padding: 10px !important; margin-bottom: 15px !important; }
             #start-btn { font-size: 24px !important; padding: 10px !important; }
             
-            /* Ép Pop-up chừa lề an toàn nhiều hơn (max-height giảm xuống 75vh) */
+            /* Ép Pop-up gọn lại, cho phép scroll mượt mà nếu nội dung dài */
             #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay { 
-                max-height: 75vh !important; 
-                width: 85% !important; 
-                padding: 10px 15px !important;
+                max-height: 85vh !important; 
+                width: 90% !important; 
+                padding: 15px !important;
+                overflow-y: auto !important; /* Đảm bảo có thể cuộn lên xuống */
             }
             
-            /* Bóp nhỏ các khoảng cách margin/padding để có nhiều không gian chứa chữ hơn */
-            #quiz-title { font-size: 24px !important; margin-bottom: 5px !important; padding-bottom: 5px !important; }
-            #quiz-content { margin-bottom: 8px !important;}
-            .option-btn { padding: 5px 10px !important; margin: 4px 0 !important; }
-            #feedback-message { margin-bottom: 10px !important; }
-            .action-btn { font-size: 18px !important; padding: 6px 15px !important; margin-top: 5px !important;}
+            /* Bóp chiều cao ảnh trong Hint/Câu hỏi để không đẩy các nút bấm văng ra ngoài */
+            #quiz-content img { max-height: 110px !important; width: auto !important; margin-top: 10px !important; }
             
+            #quiz-title { font-size: 24px !important; margin-bottom: 5px !important; padding-bottom: 5px !important; }
+            #quiz-content { margin-bottom: 8px !important; font-size: 18px !important; }
+            .option-btn { padding: 8px 10px !important; margin: 5px 0 !important; font-size: 16px !important; }
+            #feedback-message { margin-bottom: 10px !important; }
+            
+            /* TĂNG KÍCH CỠ các nút chức năng (Submit, Close, Continue) để dễ bấm trên cảm ứng */
+            .action-btn { font-size: 22px !important; padding: 10px 30px !important; margin-top: 10px !important; font-weight: bold; }
+            
+            /* THU NHỎ Màn hình Pause Menu để vừa vặn, không bị khuất dòng Tutorial */
+            #pause-menu h2 { font-size: 32px !important; margin-bottom: 10px !important; text-shadow: 2px 2px 0 #800080 !important; }
+            .pause-btn { padding: 8px 20px !important; margin: 5px !important; font-size: 18px !important; width: 85% !important; max-width: 300px !important; }
+
             /* Thu nhỏ HUD xuống thêm một bậc nữa trên điện thoại ngang */
             #hud-lives img { width: 20px !important; height: 20px !important; }
             .hud-btn { width: 28px !important; height: 28px !important; }
-            .hud-btn img { width: 16px !important; height: 16px !important; }
+            .hud-btn img { width: 20px !important; height: 20px !important; }
             #hud-progress img { width: 26px !important; height: 26px !important; }
             #progress-fill { height: 14px !important; }
         }
