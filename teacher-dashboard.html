@@ -267,7 +267,27 @@
 
             // Gọi API Gemini CHUẨN XÁC VÀ AN TOÀN NHẤT
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                // 1. Tự động lấy danh sách AI mới nhất từ Google
+                const modelsReq = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                const modelsData = await modelsReq.json();
+                
+                let targetModel = "models/gemini-flash"; // Tên dự phòng mặc định
+                
+                if (modelsData && modelsData.models) {
+                    // Lọc cực kỳ cẩn thận: Chỉ lấy dòng "flash" miễn phí, né dòng "pro"
+                    let flashModel = modelsData.models.find(m => 
+                        m.name.includes("flash") && 
+                        !m.name.includes("pro") && 
+                        m.supportedGenerationMethods && 
+                        m.supportedGenerationMethods.includes("generateContent")
+                    );
+                    if (flashModel) {
+                        targetModel = flashModel.name; 
+                    }
+                }
+
+                // 2. Gửi yêu cầu phân tích bằng chính xác con AI vừa tìm được
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${targetModel}:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -288,7 +308,6 @@
             } catch (error) {
                 document.getElementById('ai-output').innerHTML = `<span style='color:red;'>Connection Error. Please check your network or API Key.</span>`;
             }
-        };
 
         // ========================================================
         // VẼ BIỂU ĐỒ BẰNG CHART.JS
