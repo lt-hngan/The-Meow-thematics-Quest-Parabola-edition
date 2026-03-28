@@ -24,34 +24,30 @@
     </script>
 
     <style>
-        /* Đã thay đổi height thành biến --vh để vừa vặn 100% không bị lẹm */
         body { 
             margin: 0; padding: 0; background-color: #202020; 
-            width: 100vw; 
-            height: 100vh; /* Dự phòng */
-            height: calc(var(--vh, 1vh) * 100); /* Ép chiều cao thực tế Safari */
-            position: fixed; /* Khóa trang web, chống trượt */
-            overflow: hidden; touch-action: none; font-family: 'Roboto', sans-serif; 
-            /* BỎ DISPLAY FLEX Ở ĐÂY ĐỂ TRÁNH XUNG ĐỘT PHASER */
+            width: 100vw; height: 100vh; height: calc(var(--vh, 1vh) * 100); 
+            position: fixed; overflow: hidden; touch-action: none; font-family: 'Roboto', sans-serif; 
         }
         
-        #game-container { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; overflow: hidden; 
-            /* BỎ DISPLAY FLEX Ở ĐÂY */
-        }
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
         
-        canvas { display: block; margin: 0 auto; max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
+        canvas { 
+            display: block; margin: 0 auto; max-width: 100% !important; max-height: 100% !important; object-fit: contain; 
+            image-rendering: -moz-crisp-edges; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated;
+        }
         .info-input { padding: 12px; margin: 8px; width: 80%; max-width: 300px; min-width: 250px; font-size: 18px; border-radius: 5px; border: 2px solid #fff; background: rgba(255,255,255,0.9); font-family: 'VT323', monospace; box-sizing: border-box; }
-        #start-btn { padding: 12px 40px; font-size: 26px; background: #28a745; color: white; border: 4px solid #1e7e34; border-radius: 10px; cursor: pointer; margin-top: 20px; font-family: 'VT323', monospace; margin-bottom: 40px;}
+        
+        .mode-btn { padding: 12px 20px; font-size: 22px; color: white; border-radius: 10px; cursor: pointer; font-family: 'VT323', monospace; transition: 0.2s; border: 4px solid; width: 100%; box-sizing: border-box; }
+        .mode-btn:hover { transform: scale(1.05); }
+        .practice-btn { background: #17a2b8; border-color: #117a8b; }
+        .combat-btn { background: #dc3545; border-color: #bd2130; }
         
         .hud-btn { background: transparent; border: none; cursor: pointer; transition: 0.2s; padding: 0; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-left: 10px; }
         .hud-btn:hover { transform: scale(1.1); }
-
         .pause-btn { padding: 15px 30px; margin: 10px; font-size: 22px; width: 80%; max-width: 400px; background: #800080; color: white; border: 3px solid #fff; border-radius: 10px; cursor: pointer; font-family: 'VT323', monospace; text-transform: uppercase; transition: 0.2s; }
         .pause-btn:hover { background: #5c005c; transform: scale(1.05); }
 
-        /* 1. ĐÂY LÀ PHẦN CSS CƠ BẢN CỦA POP-UP (GIỮ NGUYÊN) */
         #quiz-overlay, #tutorial-overlay, #tutorial-info, #knowledge-review-overlay, #questions-review-overlay, #mistake-summary-overlay, #report-confirm-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; border: 5px solid #333; font-family: 'Roboto', sans-serif; box-sizing: border-box; max-height: 80vh; overflow-y: auto; }
         #quiz-title { font-family: 'VT323', monospace; font-size: 42px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px dashed #ccc; line-height: 1; }
         #quiz-content { font-size: 20px; color: #222; margin-bottom: 15px; }
@@ -61,66 +57,27 @@
         .correct-text { color: #28a745; font-family: 'VT323', monospace; font-size: 26px !important; }
         .wrong-text { color: #dc3545; font-family: 'Roboto', sans-serif; font-size: 18px; }
 
-        /* ======================================================== */
-        /* BỘ LỆNH ÉP PIXEL SẮC NÉT CHO MỌI TRÌNH DUYỆT (KỂ CẢ SAFARI) */
-        /* ======================================================== */
-        #hud-lives img, .hud-btn img, #hud-progress img {
-            image-rendering: -moz-crisp-edges;         /* Dành cho Firefox */
-            image-rendering: -webkit-optimize-contrast; /* Dành cho Safari và iOS cũ */
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;                /* Chuẩn chung hiện đại */
-        }
-
-        /* Tăng kích thước gốc trên PC */
-        .hud-btn { background: transparent; border: none; cursor: pointer; transition: 0.2s; padding: 0; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; margin-left: 10px; }
-        .hud-btn img { width: 36px; height: 36px; }
+        #hud-lives img, .hud-btn img, #hud-progress img { image-rendering: -moz-crisp-edges; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated; }
+        .hud-btn { width: 50px; height: 50px; } .hud-btn img { width: 36px; height: 36px; }
         #hud-lives img { width: 36px; height: 36px; object-fit: contain; }
         #hud-progress img { width: 44px; height: 44px; object-fit: contain; }
 
-        /* 3. ĐÂY LÀ PHẦN RESPONSIVE CHO ĐIỆN THOẠI (Ngang) */
         @media screen and (max-height: 450px) {
             #start-screen h1 { font-size: 35px !important; }
             #mobile-warning { font-size: 13px !important; padding: 5px 10px !important; margin: 10px 0 !important;}
             #start-screen input, #start-screen select { font-size: 16px !important; padding: 10px !important; margin-bottom: 15px !important; }
-            #start-btn { font-size: 24px !important; padding: 10px !important; }
-            
-            /* Ép Pop-up ngắn lại (chỉ chiếm tối đa 70% chiều cao màn hình) để không bao giờ chạm viền */
-            #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay, #mistake-summary-overlay, #report-confirm-overlay { 
-                max-height: 70vh !important; 
-                width: 90% !important; 
-                padding: 15px !important;
-                overflow-y: auto !important; /* Bật thanh cuộn mượt mà bên trong */
-                border-radius: 10px !important; /* Bo góc mượt hơn trên mobile */
-            }
-            
-            /* Trả lại tỷ lệ tự nhiên cho ảnh, ảnh sẽ tự động thu lọt lòng khung width, cuộn để xem */
-            #quiz-content img { 
-                max-width: 100% !important; 
-                height: auto !important; 
-                margin-top: 10px !important; 
-            }
-            
-
+            #quiz-overlay, #tutorial-overlay, #knowledge-review-overlay, #questions-review-overlay, #mistake-summary-overlay, #report-confirm-overlay { max-height: 70vh !important; width: 90% !important; padding: 15px !important; overflow-y: auto !important; border-radius: 10px !important; }
+            #quiz-content img { max-width: 100% !important; height: auto !important; margin-top: 10px !important; }
             #quiz-title { font-size: 30px !important; margin-bottom: 5px !important; padding-bottom: 5px !important; }
             #quiz-content { margin-bottom: 8px !important; font-size: 18px !important; }
             .option-btn { padding: 8px 10px !important; margin: 5px 0 !important; font-size: 16px !important; }
             #feedback-message { margin-bottom: 10px !important; }
-            
-            /* TĂNG KÍCH CỠ các nút chức năng (Submit, Close, Continue) để dễ bấm trên cảm ứng */
             .action-btn { font-size: 22px !important; padding: 10px 30px !important; margin-top: 10px !important; font-weight: bold; }
-            
-            /* THU NHỎ Màn hình Pause Menu để vừa vặn, không bị khuất dòng Tutorial */
             #pause-menu h2 { font-size: 32px !important; margin-bottom: 10px !important; text-shadow: 2px 2px 0 #800080 !important; }
             .pause-btn { padding: 8px 20px !important; margin: 5px !important; font-size: 18px !important; width: 85% !important; max-width: 300px !important; }
-
-            /* Kích thước to, rõ ràng và DỄ BẤM trên mobile (Đã được chống mờ) */
             #hud-lives img { width: 30px !important; height: 30px !important; }
-            
-            .hud-btn { width: 42px !important; height: 42px !important; }
-            .hud-btn img { width: 28px !important; height: 28px !important; }
-            
-            #hud-progress img { width: 36px !important; height: 36px !important; }
-            #progress-fill { height: 18px !important; }
+            .hud-btn { width: 42px !important; height: 42px !important; } .hud-btn img { width: 28px !important; height: 28px !important; }
+            #hud-progress img { width: 36px !important; height: 36px !important; } #progress-fill { height: 18px !important; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
@@ -155,10 +112,9 @@
                 <img src="assets/img/menu.png" style="width: 24px; height: 24px; object-fit: contain;">
             </button>
         </div>
-<div id="start-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: calc(var(--vh, 1vh) * 100); background-image: url('assets/img/backgrounds/VINES - Second.png'), url('assets/img/backgrounds/BUSH - BACKGROUND.png'), url('assets/img/backgrounds/WOODS - Fourth.png'), url('assets/img/backgrounds/WOODS - Third.png'), url('assets/img/backgrounds/WOODS - Second.png'), url('assets/img/backgrounds/WOODS - First.png'), url('assets/img/backgrounds/BACKGROUND.png'); background-repeat: repeat-x; background-size: auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, cover; background-position: top left, bottom left, bottom left, bottom left, bottom left, bottom left, center; image-rendering: pixelated; z-index: 2000;">
-            
+
+        <div id="start-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: calc(var(--vh, 1vh) * 100); background-image: url('assets/img/backgrounds/VINES - Second.png'), url('assets/img/backgrounds/BUSH - BACKGROUND.png'), url('assets/img/backgrounds/WOODS - Fourth.png'), url('assets/img/backgrounds/WOODS - Third.png'), url('assets/img/backgrounds/WOODS - Second.png'), url('assets/img/backgrounds/WOODS - First.png'), url('assets/img/backgrounds/BACKGROUND.png'); background-repeat: repeat-x; background-size: auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, auto 100%, cover; background-position: top left, bottom left, bottom left, bottom left, bottom left, bottom left, center; image-rendering: pixelated; z-index: 2000;">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center; padding: 20px 0; box-sizing: border-box;">
-                
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 15px; border: 4px solid #FFD700; box-shadow: 0 10px 30px rgba(0,0,0,0.6); backdrop-filter: blur(5px); flex-wrap: wrap; width: 90%; max-width: 650px; box-sizing: border-box;">
                     <div style="width: 32px; height: 32px; background: url('assets/img/character/1_Cat_Idle-Sheet.png') left center no-repeat; background-size: cover; transform: scale(2); image-rendering: pixelated; margin: 5px;"></div>
                     <h1 style="margin: 0; padding: 0; font-size: 40px; letter-spacing: 1px; text-align: center; color: #FFD700; text-shadow: 3px 3px 0 #000; font-family: 'VT323', monospace; line-height: 1;">THE MEOW-THEMATICS QUEST:<br>PARABOLA EDITION</h1>
@@ -184,20 +140,29 @@
                         <option value="10B">10B</option>
                     </select>
                     
-                    <button id="start-btn" onclick="startGame()" style="width: 100%; font-size: 24px; padding: 12px; margin: 0; cursor: pointer;">PLAY</button>
+                    <div style="display: flex; gap: 10px; width: 100%; flex-wrap: wrap;">
+                        <button class="mode-btn practice-btn" onclick="startGame('practice')">PLAY PRACTICE MODE</button>
+                        <button class="mode-btn combat-btn" onclick="startGame('combat')">PLAY COMBAT MODE</button>
+                    </div>
                 </div>
-                
                 <div style="height: 60px; flex-shrink: 0;"></div>
             </div>
-            
             <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); pointer-events: none; z-index: 2001;"></div>
+        </div>
+
+        <div id="waiting-room-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); z-index:9000; flex-direction:column; justify-content:center; align-items:center;">
+            <h2 style="font-size:60px; color:#FFD700; font-family:'VT323', monospace; margin-bottom:20px; text-shadow: 4px 4px 0 #000; text-align: center;">WAITING ROOM</h2>
+            <p style="font-size:24px; color:white; font-family:'Roboto', sans-serif; text-align: center;">Look at the Class Board.<br>Waiting for the teacher to start the race...</p>
+            <div style="margin-top: 30px; border: 8px solid rgba(255,255,255,0.3); border-top: 8px solid #FFD700; border-radius: 50%; width: 60px; height: 60px; animation: spin 1.5s linear infinite;"></div>
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
         </div>
 
         <div id="pause-menu" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:7000; flex-direction:column; justify-content:center; align-items:center;">
             <h2 style="font-size:50px; color:white; font-family:'VT323', monospace; margin-bottom:30px; text-shadow: 3px 3px 0 #800080;">GAME PAUSED</h2>
             <button class="pause-btn" onclick="togglePause()">Continue</button>
-            <button class="pause-btn" onclick="restartFromBeginning()">Restart</button>
+            <button id="pause-btn-restart" class="pause-btn" onclick="restartFromBeginning()">Restart</button>
             <button class="pause-btn" onclick="restartFromCheckpoint()">Restart from nearest checkpoint</button>
+            <button id="pause-btn-menu" class="pause-btn" onclick="location.reload()" style="display:none;">Back to Menu</button>
             <button class="pause-btn" onclick="showTutorialInfo()">Tutorial</button>
         </div>
 
@@ -221,7 +186,11 @@
         <div id="tutorial-overlay" style="display:none; z-index:5000; border-color: #28a745;">
             <h2 id="tutorial-title" style="font-size:36px; font-family:'VT323', monospace; color:#28a745; margin-top: 0;">TUTORIAL</h2>
             <div id="tutorial-text" style="font-size:20px; margin-bottom:20px; color: #333;"></div>
-            <button onclick="closeTutorialPopup()" class="action-btn" style="background:#28a745;">Got it!</button>
+            
+            <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <button onclick="closeTutorialPopup()" class="action-btn" style="background:#28a745; margin:0;">Got it!</button>
+                <button id="btn-skip-tutorial" onclick="skipTutorial()" class="action-btn" style="background:#6c757d; margin:0; display:none;">Skip Tutorial</button>
+            </div>
         </div>
 
         <div id="quiz-overlay" style="display:none; z-index:4000;">
@@ -255,6 +224,7 @@
                 <button onclick="closePopup()" class="action-btn" style="background: #ffc107; color: black;">Close</button>
             </div>
         </div>
+        
         <div id="knowledge-review-overlay" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:700px; max-height:90vh; background:#fff; padding:20px; border-radius:15px; box-shadow:0 10px 40px rgba(0,0,0,0.5); text-align:center; border:5px solid #1a2a6c; z-index:4500; overflow-y:auto; box-sizing:border-box;">
             <h2 style="font-family:'VT323', monospace; font-size:36px; color:#1a2a6c; margin-top:0;">KNOWLEDGE REVIEW</h2>
             <div id="knowledge-review-content" style="margin-bottom: 20px;">
@@ -265,20 +235,20 @@
 
         <div id="questions-review-overlay" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:800px; max-height:90vh; background:#fff; padding:20px; border-radius:15px; box-shadow:0 10px 40px rgba(0,0,0,0.5); text-align:left; border:5px solid #800080; z-index:4500; overflow-y:auto; box-sizing:border-box;">
             <h2 style="font-family:'VT323', monospace; font-size:36px; color:#800080; margin-top:0; text-align: center;">QUESTIONS REVIEW</h2>
-            <div id="questions-review-content" style="font-size: 18px; color: #333; margin-bottom: 20px; line-height: 1.5;">
-                </div>
+            <div id="questions-review-content" style="font-size: 18px; color: #333; margin-bottom: 20px; line-height: 1.5;"></div>
             <div style="text-align: center;">
                 <button onclick="closeQuestionsReview()" class="action-btn" style="background:#800080;">Close</button>
             </div>
         </div>
+        
         <div id="mistake-summary-overlay" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:800px; max-height:90vh; background:#fff; padding:20px; border-radius:15px; box-shadow:0 10px 40px rgba(0,0,0,0.5); text-align:left; border:5px solid #dc3545; z-index:4500; overflow-y:auto; box-sizing:border-box;">
             <h2 style="font-family:'VT323', monospace; font-size:36px; color:#dc3545; margin-top:0; text-align: center;">MISTAKES SUMMARY</h2>
-            <div id="mistake-summary-content" style="font-size: 18px; color: #333; margin-bottom: 20px; line-height: 1.5;">
-                </div>
+            <div id="mistake-summary-content" style="font-size: 18px; color: #333; margin-bottom: 20px; line-height: 1.5;"></div>
             <div style="text-align: center;">
                 <button onclick="closeMistakeSummary()" class="action-btn" style="background:#dc3545;">Close</button>
             </div>
         </div>
+        
         <div id="report-confirm-overlay" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:500px; background:#fff; padding:20px; border-radius:15px; box-shadow:0 10px 40px rgba(0,0,0,0.5); text-align:center; border:5px solid #fd7e14; z-index:5000; box-sizing:border-box;">
             <h2 style="font-family:'VT323', monospace; font-size:36px; color:#fd7e14; margin-top:0;">REPORT QUESTION</h2>
             <p style="font-size: 18px; color: #333; font-family: 'Roboto', sans-serif; line-height: 1.5; text-align: left; text-shadow: none;">
@@ -290,12 +260,11 @@
                 <button onclick="closeReportPopup()" class="action-btn" style="background:#6c757d; margin:0; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">Cancel</button>
             </div>
         </div>
+        
         <div id="report-reason-overlay" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:550px; background:#fff; padding:20px; border-radius:15px; box-shadow:0 10px 40px rgba(0,0,0,0.5); text-align:center; border:5px solid #dc3545; z-index:5100; box-sizing:border-box;">
             <h2 style="font-family:'VT323', monospace; font-size:32px; color:#dc3545; margin-top:0;">REASON FOR REPORTING</h2>
             <p style="font-size: 16px; color: #333; font-family: 'Roboto', sans-serif; text-align: left; margin-bottom: 10px;">Please tell us what is wrong with this question or explanation:</p>
-            
             <textarea id="report-reason-input" rows="4" placeholder="Type your reason here..." style="width: 100%; font-size: 18px; padding: 10px; border-radius: 8px; border: 2px solid #ccc; font-family: 'Roboto', sans-serif; resize: none; box-sizing: border-box; outline: none;"></textarea>
-            
             <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
                 <button onclick="sendFinalReport()" class="action-btn" style="background:#28a745; margin:0; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">Send Report</button>
                 <button onclick="closeReportReasonPopup()" class="action-btn" style="background:#6c757d; margin:0; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">Cancel</button>
@@ -304,7 +273,6 @@
     </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
     <script src="game.js"></script>
 </body>
 </html>
