@@ -109,15 +109,20 @@ function sendLiveUpdate(status) {
         let minutes = Math.floor(duration / 60); let seconds = duration % 60; 
         durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
     }
+    
     let wrongList = [];
     for(let qID in questionStats) {
         let stats = questionStats[qID];
         if(stats && stats.wrongCount > 0) {
             let displayName = qID.includes('_extra') ? qID.split('_')[0] + '(Extra)' : qID;
-            wrongList.push(`${displayName} (${stats.wrongCount}x)`);
+            
+            // Lấy chi tiết các đáp án sai mà học sinh đã bấm (ví dụ: C, D)
+            let chosenAns = stats.wrongAnswers.join(", ");
+            wrongList.push(`${displayName} (Sai ${stats.wrongCount} lần - Đã chọn: [${chosenAns}])`);
         }
     }
-    let wrongStr = wrongList.length > 0 ? wrongList.join(", ") : "None";
+    let wrongStr = wrongList.length > 0 ? wrongList.join(" | ") : "None";
+    
     let topicsArr = getReviewTopics(); let topicsStr = topicsArr.length > 0 ? topicsArr.join(", ") : "Perfect Run (0 mistakes)";
     db.ref('sessions/' + userId).set({
         name: userInfo.name, class: userInfo.class, mode: userInfo.mode, status: status, progress: correctAnswersCount, streak: currentStreak, duration: durationStr, wrongAnswers: wrongStr, reviewTopics: topicsStr, questionTimes: questionTimes, lastUpdated: firebase.database.ServerValue.TIMESTAMP

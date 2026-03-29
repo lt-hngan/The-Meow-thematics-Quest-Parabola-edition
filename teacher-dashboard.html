@@ -225,29 +225,69 @@
             if (targetClass !== "ALL") analysisData = rawData.filter(r => r.class === targetClass);
             if(analysisData.length === 0) { document.getElementById('ai-output').innerHTML = "<span style='color:red;'>No data available for this class.</span>"; return; }
 
-            const QUESTION_METADATA = `[THÔNG TIN CỐT LÕI VỀ CẤU TRÚC ĐỀ BÀI]\n- Q1: Tính đồng biến/nghịch biến dựa vào hệ số 'a'.\n- Q2: Công thức tọa độ đỉnh Parabol.\n- Q3: Phương trình trục đối xứng.\n- Q4: Tọa độ đỉnh (x, y).\n- Q5: Khoảng đồng biến/nghịch biến.\n- Q6: Giá trị lớn nhất/nhỏ nhất.\n- Q7: Tổng hợp các yếu tố của Parabol.`;
+            // CUNG CẤP NGỮ CẢNH CỰC KỲ CHI TIẾT CHO AI
+            const QUESTION_METADATA = `
+            [THÔNG TIN CHI TIẾT VỀ NỘI DUNG VÀ ĐÁP ÁN CỦA 7 CÂU HỎI TRONG GAME]
+            (Sử dụng thông tin này để đối chiếu với đáp án sai mà học sinh đã chọn nhằm phân tích gốc rễ vấn đề)
+
+            - Q1 (Nhận biết): 
+              + Câu hỏi: Đồ thị hàm số y = ax^2+bx+c quay bề lõm lên hay xuống?
+              + Đáp án: A. True | B. False
+              + Phân tích: Nếu học sinh sai, nghĩa là các em chưa nắm vững quy tắc dấu của 'a' (a > 0 lõm lên, a < 0 lõm xuống).
+
+            - Q2 (Nhận biết):
+              + Câu hỏi: Công thức tổng quát tọa độ đỉnh Parabol là gì?
+              + Đáp án: A. (b/2a, -Δ/4a) | B. (-b/2a, -Δ/4a) [ĐÁP ÁN ĐÚNG] | C. (-b/2a, Δ/4a) | D. (b/2a, Δ/4a)
+              + Phân tích: Học sinh chọn C/D là quên dấu trừ ở tung độ. Chọn A là quên dấu trừ ở hoành độ.
+
+            - Q3 (Thông hiểu):
+              + Câu hỏi: Phương trình trục đối xứng của hàm số là gì?
+              + Đáp án: A. x = -vx | B. x = vx [ĐÁP ÁN ĐÚNG] | C. y = vx | D. y = -vx
+              + Phân tích: Nếu chọn C hoặc D, học sinh nhầm lẫn trục đối xứng là đường ngang (y=...) thay vì đường thẳng đứng (x=...).
+
+            - Q4 (Thông hiểu):
+              + Câu hỏi: Tọa độ đỉnh của hàm số cụ thể là bao nhiêu?
+              + Đáp án: C [ĐÁP ÁN ĐÚNG] là (x, y). Các đáp án A, B, D bị sai dấu cộng trừ.
+              + Phân tích: Nếu học sinh tính sai, thường là do tính đúng x = -b/2a nhưng thế vào phương trình sai bước tính toán số học để tìm y.
+
+            - Q5 (Thông hiểu - Điền khuyết):
+              + Câu hỏi: Điền số vào khoảng đồng biến/nghịch biến (..., +∞).
+              + Đáp án: Học sinh phải tự gõ hoành độ đỉnh x = -b/2a.
+              + Phân tích: Sai câu này nghĩa là học sinh không biết tìm hoành độ đỉnh, hoặc không hiểu đỉnh Parabol chính là điểm chia khoảng đồng biến/nghịch biến.
+
+            - Q6 (Vận dụng):
+              + Câu hỏi: Hàm số đạt giá trị lớn nhất hay nhỏ nhất, và giá trị đó là bao nhiêu?
+              + Đáp án: A. Cực trị sai, Giá trị y đúng | B. Cực trị đúng, Giá trị y đúng [ĐÁP ÁN ĐÚNG] | C. Cực trị đúng, nhưng Giá trị là x (sai) | D. Cực trị sai, Giá trị là x (sai).
+              + Phân tích: Chọn A/D là nhầm lẫn Max/Min (a>0 có Min, a<0 có Max). Chọn C là chọn nhầm hoành độ đỉnh x thay vì tung độ đỉnh y (giá trị).
+
+            - Q7 (Vận dụng cao):
+              + Câu hỏi: Tìm phát biểu SAI trong 4 tính chất của hàm số.
+              + Đáp án: D (Khoảng đồng biến/nghịch biến bị viết ngược) là phát biểu SAI.
+              + Phân tích: Đòi hỏi phân tích toàn diện. Học sinh thường lười xét khoảng đồng biến/nghịch biến nên hay sai câu này.
+            `;
+
             const selectedLang = document.getElementById('ai-language').value;
             const langInstruction = selectedLang === 'vi' ? "Answer in clear Vietnamese" : "Answer in clear English";
 
             let prompt = "";
-            let systemInstruction = `You are an expert Instructional Designer. Analyze the provided JSON data. ${langInstruction}, use bullet points, and be concise.\n` + QUESTION_METADATA;
+            let systemInstruction = `You are an expert Instructional Designer and Math Teacher. Analyze the provided JSON data from a Parabola math game. ${langInstruction}, use bullet points, and be concise but deeply insightful. Do not include raw JSON in your output.\n\n${QUESTION_METADATA}`;
 
             if (aiAnalysisType === 'common_mistakes') {
                 document.getElementById('ai-result-title').innerText = "Common Mistakes Analysis";
-                let wrongList = analysisData.map(r => r.wrongAnswers).join(", ");
-                prompt = `${systemInstruction} \n\nData (Wrong answers): ${wrongList}. \nTask: Identify questions with highest failure rates and explain student misconceptions.`;
+                let wrongList = analysisData.map(r => r.wrongAnswers).join("\n");
+                prompt = `${systemInstruction} \n\nData (Detailed Student Mistakes):\n${wrongList} \n\nTask: Identify which specific questions (Q1 to Q7) have the highest failure rates. Use the QUESTION_METADATA to explain EXACTLY what misconceptions the students have based on the specific wrong options (A, B, C, D) they chose.`;
             }
             else if (aiAnalysisType === 'score_chart') {
                 document.getElementById('ai-result-title').innerText = "Score Distribution Chart";
                 window.drawScoreChart(analysisData);
                 let scores = analysisData.map(r => r.progress || 0);
-                prompt = `${systemInstruction} \n\nData (Scores out of 7): ${JSON.stringify(scores)}. \nTask: Evaluate the overall performance of the class.`;
+                prompt = `${systemInstruction} \n\nData (Student Scores out of 7): ${JSON.stringify(scores)}. \nTask: Based on this score distribution, evaluate the overall performance of the class. Is the test too hard, too easy, or well-balanced?`;
             }
             else if (aiAnalysisType === 'time_analysis') {
                 document.getElementById('ai-result-title').innerText = "Time Allocation Analysis";
                 window.drawTimeChart(analysisData);
                 let timeDataList = analysisData.map(r => r.questionTimes || {});
-                prompt = `${systemInstruction} \n\nData (Time spent per question): ${JSON.stringify(timeDataList)}. \nTask: Analyze time taken vs expected time, provide advice.`;
+                prompt = `${systemInstruction} \n\nData (Time spent per question in seconds): ${JSON.stringify(timeDataList)}. \nTask: Calculate which questions are taking the longest time to solve. Explain why these specific parabola topics take longer. Provide actionable advice for the teacher.`;
             }
 
             try {
