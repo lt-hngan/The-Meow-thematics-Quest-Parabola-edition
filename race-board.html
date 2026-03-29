@@ -210,7 +210,7 @@
 
         function showAnnouncement(name) {
             let banner = document.getElementById('announcement');
-            banner.innerHTML = `🏆 ${name} ĐÃ VỀ ĐÍCH! 🏆`; banner.style.display = 'block'; fireConfetti();
+            banner.innerHTML = `🏆 ${name} COMPLETED THE RACE! 🏆`; banner.style.display = 'block'; fireConfetti();
             setTimeout(() => { banner.style.display = 'none'; }, 5000);
         }
 
@@ -298,7 +298,11 @@
                     let prev = previousState[student.id];
                     if (prev && student.rank < prev.rank && !student.isRecentSlot) overtakeClass = "overtaking";
 
-                    if (prog === TOTAL_QUESTIONS && prev && prev.progress < TOTAL_QUESTIONS) showAnnouncement(student.name); 
+                    // ĐÃ THAY ĐỔI: Pháo hoa chỉ bắn khi Status chuyển thành "Victory" (Lúc chạm Pipe và hiện bảng)
+                    let isNewlyWon = student.status && student.status.includes("Victory") && (!prev || !prev.status || !prev.status.includes("Victory"));
+                    if (isNewlyWon) {
+                        showAnnouncement(student.name); 
+                    }
 
                     let rowRankClass = ""; let labelText = "";
                     if (student.isRecentSlot) { rowRankClass = "rank-runnerup"; labelText = "Runner Up"; } 
@@ -328,7 +332,9 @@
                             </div>
                         </div>
                     `;
-                    previousState[student.id] = { rank: student.rank, progress: prog };
+                    
+                    // ĐÃ THÊM: Lưu lại status hiện tại để lần lặp sau còn so sánh
+                    previousState[student.id] = { rank: student.rank, progress: prog, status: student.status };
                 });
                 container.innerHTML = html;
             }

@@ -88,11 +88,12 @@ let userId = ""; let currentStatus = "none";
 let game, player, cursors;
 let isGameOver = false, isQuizTime = false, isCutscene = false, isKnockedBack = false, isAttacking = false, lives = 3;
 let isPaused = false, isMuted = false;
+let isWaitingRoom = false; // BIẾN MỚI: Dùng để đóng băng game lúc đang ở phòng chờ
+
 let userInfo = { name: "", class: "", group: "N/A", mode: "practice" }; 
 let gameStartTime = 0, heartLostCount = 0, itemsCollectedCount = 0, correctAnswersCount = 0, currentStreak = 0;
 let questionStartTime = 0; let questionTimes = {}; let questionStats = {};
 
-// MẢNG LƯU TRỮ LỊCH SỬ CÂU HỎI (Bao gồm cả Extra Practice)
 window.historyQuestions = []; 
 
 let fallingItems = [], trapPlatforms = []; let globalRandomizedData = null; let savedCheckpoint = null; 
@@ -132,7 +133,7 @@ function getReviewTopics() {
     for (let qID in questionStats) {
         let stats = questionStats[qID];
         if(stats && stats.wrongCount > 0) {
-            let baseID = qID.split('_')[0]; // Lấy "Q1" từ "Q1_extra_123"
+            let baseID = qID.split('_')[0]; 
             stats.wrongAnswers.forEach(ans => {
                 let ansUpper = ans.trim().toUpperCase();
                 if (baseID === "Q1" && ansUpper === "B") reviewTopics.add("Concavity");
@@ -159,7 +160,6 @@ window.startGame = function(selectedMode) {
     userId = userInfo.class + "_" + userInfo.name.replace(/\s+/g, '');
     db.ref('sessions/' + userId).onDisconnect().update({ status: "none (disconnected)" });
     
-    // --- ẨN HIỆN NÚT TRONG PAUSE MENU THEO MODE ---
     let btnRestart = document.getElementById('pause-btn-restart');
     let btnMenu = document.getElementById('pause-btn-menu');
     if (btnRestart && btnMenu) {
@@ -173,38 +173,69 @@ window.startGame = function(selectedMode) {
     }
     
     if (selectedMode === 'combat') {
-        sendLiveUpdate("waiting"); document.getElementById('waiting-room-overlay').style.display = 'flex';
+        sendLiveUpdate("waiting"); 
+        document.getElementById('waiting-room-overlay').style.display = 'flex';
         
+        // TẢI GAME NGẦM NGAY LẬP TỨC TRONG KHI ĐANG Ở WAITING ROOM
+        launchPhaserGame(true);
+
         db.ref('gameControl/isStarted').once('value').then((snap) => {
             if (snap.val() === true) {
                 document.getElementById('waiting-room-overlay').innerHTML = `
                     <h2 style="font-size:50px; color:#28a745; font-family:'VT323', monospace; text-shadow: 3px 3px 0 #000; text-align: center;">RACE IS LIVE!</h2>
                     <p style="font-size:24px; color:white; font-family:'Roboto', sans-serif; text-align: center;">Joining the match...</p>
                 `;
-                setTimeout(() => { document.getElementById('waiting-room-overlay').style.display = 'none'; launchPhaserGame(); }, 1500);
+                setTimeout(() => { 
+                    document.getElementById('waiting-room-overlay').style.display = 'none'; 
+                    startCombatRaceReal(); // Rã đông game
+                }, 1500);
             } else {
                 db.ref('gameControl/isStarted').on('value', (snapshot) => {
                     if (snapshot.val() === true) {
                         document.getElementById('waiting-room-overlay').style.display = 'none';
                         db.ref('gameControl/isStarted').off(); 
-                        launchPhaserGame();
+                        startCombatRaceReal(); // Rã đông game
                     }
                 });
             }
         });
-    } else { launchPhaserGame(); }
+    } else { 
+        launchPhaserGame(false); 
+    }
 }
 
-function launchPhaserGame() {
+// Hàm Rã đông Game khi Giáo viên bấm Start
+function startCombatRaceReal() {
+    isWaitingRoom = false; // Bỏ trạng thái đóng băng
+    gameStartTime = Date.now();
+    sendLiveUpdate("playing");
+    
+    // Đảm bảo game tiếp tục chạy nếu nó đã tải xong
+    if (currentScene) {
+        if (currentScene.physics) currentScene.physics.resume();
+        if (player && player.anims) player.anims.resume();
+        if (currentScene.bgMusic && !currentScene.bgMusic.isPlaying) currentScene.bgMusic.play();
+    }
+}
+
+function launchPhaserGame(isCombatWaiting = false) {
     document.getElementById('hud-top-left').style.display = (userInfo.mode === 'practice') ? 'none' : 'block';
     document.getElementById('hud-progress').style.display = 'flex'; document.getElementById('hud-controls').style.display = 'flex';
     levelData = generateLevelData(); 
     
-    window.historyQuestions = [...levelData]; // Khởi tạo lịch sử bằng 7 câu gốc
+    window.historyQuestions = [...levelData]; 
     for(let i = 1; i <= 7; i++) questionStats["Q" + i] = { wrongCount: 0, wrongAnswers: [] };
     
     globalRandomizedData = null; 
-    game = new Phaser.Game(config); gameStartTime = Date.now(); setTimeout(alignUIToCanvas, 100); sendLiveUpdate("playing");
+    isWaitingRoom = isCombatWaiting; // Lưu trạng thái có đang ở phòng chờ hay không
+    
+    game = new Phaser.Game(config); 
+    
+    if (!isWaitingRoom) {
+        gameStartTime = Date.now(); 
+        sendLiveUpdate("playing");
+    }
+    setTimeout(alignUIToCanvas, 100); 
 }
 
 window.toggleMute = function() {
@@ -279,7 +310,8 @@ function create(data) {
     
     updateLivesUI(); updateProgressBar();
     if (this.bgMusic) this.bgMusic.stop(); 
-    this.bgMusic = this.sound.add('bg_music', { loop: true, volume: 0.3 }); this.bgMusic.play();
+    this.bgMusic = this.sound.add('bg_music', { loop: true, volume: 0.3 }); 
+    if (!isWaitingRoom) this.bgMusic.play(); // CHỈ PHÁT NHẠC NẾU KHÔNG Ở PHÒNG CHỜ
 
     if (!globalRandomizedData) globalRandomizedData = [...levelData]; let randomizedData = globalRandomizedData;
 
@@ -315,65 +347,33 @@ function create(data) {
 
     window.globalTutorialItem = tItem; window.globalTutorialEnemy = tEnemy; window.globalTutorialCheck = tCheck;
 
-    // --- MAIN GAME BLOCK ---
     randomizedData.forEach((data, i) => {
-        // ĐÃ KHẮC PHỤC: Sử dụng công thức giả ngẫu nhiên cố định thay vì Math.random()
         let gap1 = 150 + ((i * 45) % 100); 
         let itemPlatWidth = 191 * 2; 
         let itemPlatX = currentRightEdge + gap1 + itemPlatWidth / 2; 
         let itemPlatY = 340 + ((i * 70) % 100) - Y_OFFSET;
-        
-        createPlatform(this.platformsGroup, this, itemPlatX, itemPlatY, itemPlatWidth); 
-        currentRightEdge = itemPlatX + itemPlatWidth / 2;
+        createPlatform(this.platformsGroup, this, itemPlatX, itemPlatY, itemPlatWidth); currentRightEdge = itemPlatX + itemPlatWidth / 2;
 
         if (i === 2 || i === 6) {
-            let item = this.add.image(itemPlatX, -100, 'item'); 
-            this.physics.add.existing(item, true); 
-            item.body.enable = false; item.targetY = itemPlatY - 20; 
-            item.triggerX = itemPlatX - 350; item.hasFallen = false; 
-            item.dataContent = data; fallingItems.push(item); this.itemsGroup.add(item);
-        } else { 
-            let item = createItem(this.itemsGroup, this, itemPlatX, itemPlatY - 20); 
-            item.dataContent = data; 
-        }
+            let item = this.add.image(itemPlatX, -100, 'item'); this.physics.add.existing(item, true); item.body.enable = false; item.targetY = itemPlatY - 20; item.triggerX = itemPlatX - 350; item.hasFallen = false; item.dataContent = data; fallingItems.push(item); this.itemsGroup.add(item);
+        } else { let item = createItem(this.itemsGroup, this, itemPlatX, itemPlatY - 20); item.dataContent = data; }
 
-        // ĐÃ KHẮC PHỤC: Cố định khoảng cách vực và độ dốc của kẻ địch
         let gap2 = 150 + ((i * 25) % 100); 
         let enemyPlatWidth = 191 * 4; 
         let enemyPlatX = currentRightEdge + gap2 + enemyPlatWidth / 2; 
         let enemyPlatY = itemPlatY + ((i * 40) % 60 - 30); 
-        
-        createPlatform(this.platformsGroup, this, enemyPlatX, enemyPlatY, enemyPlatWidth); 
-        currentRightEdge = enemyPlatX + enemyPlatWidth / 2;
+        createPlatform(this.platformsGroup, this, enemyPlatX, enemyPlatY, enemyPlatWidth); currentRightEdge = enemyPlatX + enemyPlatWidth / 2;
 
-        let enemy = createEnemyWithWall(this.enemiesGroup, this, enemyPlatX, enemyPlatY - 10); 
-        enemy.dataContent = data;
+        let enemy = createEnemyWithWall(this.enemiesGroup, this, enemyPlatX, enemyPlatY - 10); enemy.dataContent = data;
         
         if ((i + 1) % 2 === 0) {
-            let cpWidth = 191 * 4; 
-            let cpX = currentRightEdge + 150 + cpWidth / 2; 
-            createPlatform(this.platformsGroup, this, cpX, enemyPlatY, cpWidth); 
-            createCheckpoint(this.checkpointsGroup, this, cpX, enemyPlatY - 10); 
-            currentRightEdge = cpX + cpWidth / 2;
+            let cpWidth = 191 * 4; let cpX = currentRightEdge + 150 + cpWidth / 2; createPlatform(this.platformsGroup, this, cpX, enemyPlatY, cpWidth); createCheckpoint(this.checkpointsGroup, this, cpX, enemyPlatY - 10); currentRightEdge = cpX + cpWidth / 2;
         }
 
         if (i === 4 || i === 6) {
-            let runwayWidth = 191 * 3; 
-            let runwayX = currentRightEdge + runwayWidth / 2; 
-            createPlatform(this.platformsGroup, this, runwayX, enemyPlatY, runwayWidth); 
-            currentRightEdge = runwayX + runwayWidth / 2;
-            
-            let trapWidth = 191 * 2; 
-            let trapX = currentRightEdge + trapWidth / 2; 
-            let trapPlat = createPlatform(this.platformsGroup, this, trapX, enemyPlatY, trapWidth); 
-            trapPlat.hasTriggered = false; trapPlat.triggerX = trapX - (trapWidth / 2) - 100; 
-            trapPlatforms.push(trapPlat); 
-            currentRightEdge = trapX + trapWidth / 2;
-            
-            let safeWidth = 191 * 4; 
-            let safeX = currentRightEdge + safeWidth / 2; 
-            createPlatform(this.platformsGroup, this, safeX, enemyPlatY, safeWidth); 
-            currentRightEdge = safeX + safeWidth / 2;
+            let runwayWidth = 191 * 3; let runwayX = currentRightEdge + runwayWidth / 2; createPlatform(this.platformsGroup, this, runwayX, enemyPlatY, runwayWidth); currentRightEdge = runwayX + runwayWidth / 2;
+            let trapWidth = 191 * 2; let trapX = currentRightEdge + trapWidth / 2; let trapPlat = createPlatform(this.platformsGroup, this, trapX, enemyPlatY, trapWidth); trapPlat.hasTriggered = false; trapPlat.triggerX = trapX - (trapWidth / 2) - 100; trapPlatforms.push(trapPlat); currentRightEdge = trapX + trapWidth / 2;
+            let safeWidth = 191 * 4; let safeX = currentRightEdge + safeWidth / 2; createPlatform(this.platformsGroup, this, safeX, enemyPlatY, safeWidth); currentRightEdge = safeX + safeWidth / 2;
         }
     });
 
@@ -404,9 +404,16 @@ function create(data) {
     let isMobile = window.innerWidth < 850 || window.innerHeight < 500;
     if (isMobile) { this.cameras.main.setZoom(1.25); this.cameras.main.setFollowOffset(-150, 60); }
     this.input.on('pointerdown', () => jump(this)); cursors = this.input.keyboard.createCursorKeys();
+
+    // ĐÓNG BĂNG GAME NẾU ĐANG Ở PHÒNG CHỜ
+    if (isWaitingRoom) {
+        this.physics.pause();
+        if (player && player.anims) player.anims.pause();
+    }
 }
 
 function update() {
+    if (isWaitingRoom) return; // KHÔNG CHO CHẠY UPDATE NẾU ĐANG Ở PHÒNG CHỜ
     if (isQuizTime || isPaused) { if (player.anims && !isAttacking && !isPaused) player.anims.pause(); return; }
     if (isGameOver) return;
     if (player.y > 650) takeEnvironmentalDamage(this, player);
@@ -560,9 +567,7 @@ window.closeFeedback = function() {
                     currentEnemy.destroy(); 
                     if(currentWall) currentWall.destroy();
                     
-                    // --- SINH CÂU HỎI EXTRA VÀ LƯU VÀO HISTORY ---
                     let newQData = generateSingleQuestion(currentData.id);
-                    // Cấp ID riêng biệt để hệ thống Review nhận diện
                     newQData.id = currentData.id + "_extra_" + Date.now();
                     newQData.isExtra = true;
                     questionStats[newQData.id] = { wrongCount: 0, wrongAnswers: [] };
@@ -673,8 +678,8 @@ function winGame(scene, playerRef, finishLine) {
 }
 
 function alignUIToCanvas() { let isMobile = window.innerWidth < 850 || window.innerHeight < 500; let safeTop = 15; let safeLeft = isMobile ? 45 : 15; let safeRight = isMobile ? 45 : 15; let topLeft = document.getElementById('hud-top-left'); let topRight = document.getElementById('hud-controls'); let progress = document.getElementById('hud-progress'); if (topLeft) { topLeft.style.left = safeLeft + 'px'; topLeft.style.top = safeTop + 'px'; } if (topRight) { topRight.style.right = safeRight + 'px'; topRight.style.top = safeTop + 'px'; } if (progress) { progress.style.top = safeTop + 'px'; progress.style.left = '50%'; progress.style.transform = 'translateX(-50%)'; } }
-let resizeTimeout; window.addEventListener('resize', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { if (game && game.scale) game.scale.refresh(); alignUIToCanvas(); }, 500); }); window.addEventListener('orientationchange', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { if (game && game.scale) game.scale.refresh(); alignUIToCanvas(); }, 600); });
 window.addEventListener('load', alignUIToCanvas);
+let resizeTimeout; window.addEventListener('resize', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { if (game && game.scale) game.scale.refresh(); alignUIToCanvas(); }, 500); }); window.addEventListener('orientationchange', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { if (game && game.scale) game.scale.refresh(); alignUIToCanvas(); }, 600); });
 
 // ==========================================
 // REVIEW POP-UPS LOGIC & REPORT
@@ -693,7 +698,6 @@ window.openQuestionsReview = function() {
     let html = ""; 
     let mainQIndex = 1;
     
-    // Quét toàn bộ lịch sử câu hỏi (Original + Extra)
     window.historyQuestions.forEach((q) => { 
         let qID = q.id; 
         
