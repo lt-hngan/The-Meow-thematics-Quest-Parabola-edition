@@ -356,7 +356,7 @@
 
             } catch (error) { 
                 document.getElementById('ai-output').innerHTML = `<span style='color:red;'>Connection Error. Please check your network or API Key.</span>`; 
-            }
+            }};
         window.sendChatMessage = async function(presetMessage = null) {
             const apiKey = document.getElementById('gemini-api-key').value.trim();
             const chatInput = document.getElementById('chat-input');
