@@ -26,7 +26,7 @@
             --table-bg: #1e1e1e;
             --table-hover: #2c2c2c;
             --table-border: #333;
-            --primary-color: #33aeff; 
+            --primary-color: #3161ff; 
             --secondary-color: #a97bfa;
             --input-bg: #333;
             --input-text: #e0e0e0;
@@ -644,10 +644,10 @@
                     let d = PEDAGOGY_DATA[lang].mistakes[item.q];
                     if(d) {
                         let displayTitle = (lang === 'vi' && d.title) ? d.title : item.q;
-                        htmlContent += `<li><strong>[Topic] ${displayTitle} (${item.val} ${lang==='en'?'groups':'nhóm mắc phải'})</strong><br>
-                                        <i>${lang==='en'?'Knowledge Gap':'Lỗi sai'}</i>: ${d.gap}<br>
-                                        <i>${lang==='en'?'Reason':'Lý do'}</i>: ${d.reason}<br>
-                                        <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
+                        htmlContent += `<li><strong>${displayTitle} (${item.val} ${lang==='en'?'groups':'nhóm mắc phải'})</strong><br>
+                                        <strong>${lang==='en'?'Knowledge Gap':'Lỗi sai'}:</strong> ${d.gap}<br>
+                                        <strong>${lang==='en'?'Reason':'Lý do'}:</strong> ${d.reason}<br>
+                                        <strong>${lang==='en'?'Advice':'Lời khuyên'}:</strong> ${d.advice}</li>`;
                     }
                 });
                 htmlContent += "</ul>";
@@ -658,9 +658,9 @@
                     let d = PEDAGOGY_DATA[lang].time[item.q];
                     if(d) {
                         htmlContent += `<li><strong>${item.q} (Avg: ${item.val}s)</strong>: ${d.qContent}<br>
-                                        <i>${lang==='en'?'Difficulty':'Khó khăn'}</i>: ${d.gap}<br>
-                                        <i>${lang==='en'?'Reason for Time Lag':'Lý do tốn thời gian'}</i>: ${d.reason}<br>
-                                        <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
+                                        <strong>${lang==='en'?'Difficulty':'Khó khăn'}:</strong> ${d.gap}<br>
+                                        <strong>${lang==='en'?'Reason for Time Lag':'Lý do tốn thời gian'}:</strong> ${d.reason}<br>
+                                        <strong>${lang==='en'?'Advice':'Lời khuyên'}:</strong> ${d.advice}</li>`;
                     }
                 });
                 htmlContent += "</ul>";
@@ -671,9 +671,9 @@
                     let d = PEDAGOGY_DATA[lang].attempts[item.q];
                     if(d) {
                         htmlContent += `<li><strong>${item.q} (Avg attempts: ${item.val})</strong>: ${d.qContent}<br>
-                                        <i>${lang==='en'?'Difficulty':'Khó khăn'}</i>: ${d.gap}<br>
-                                        <i>${lang==='en'?'Reason for Trial & Error':'Lý do thử và sai'}</i>: ${d.reason}<br>
-                                        <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
+                                        <strong>${lang==='en'?'Difficulty':'Khó khăn'}:</strong> ${d.gap}<br>
+                                        <strong>${lang==='en'?'Reason for Trial & Error':'Lý do thử và sai'}:</strong> ${d.reason}<br>
+                                        <strong>${lang==='en'?'Advice':'Lời khuyên'}:</strong> ${d.advice}</li>`;
                     }
                 });
                 htmlContent += "</ul>";
