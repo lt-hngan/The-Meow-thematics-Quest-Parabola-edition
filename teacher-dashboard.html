@@ -8,9 +8,6 @@
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         h1 { color: #1a2a6c; margin: 0; text-transform: uppercase; text-shadow: 2px 2px 0px #ccc; }
         
-        .export-btn { background-color: #28a745; color: white; border: none; padding: 12px 24px; font-size: 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .export-btn:hover { background-color: #218838; transform: translateY(-2px); }
-
         .stats-bar { text-align: center; background: #e9ecef; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 18px; color: #333; font-weight: bold; border: 2px dashed #ccc; }
         
         table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; margin-bottom: 30px; }
@@ -34,13 +31,28 @@
         .ai-btn:hover { background: #5a32a3; }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9000; }
-        .modal-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 6px solid #6f42c1;}
+        .modal-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 6px solid #6f42c1;}
         .modal-close { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; float: right; }
         
-        .ai-output-content { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; line-height: 1.6; font-size: 16px; margin-top: 15px; }
-        .ai-output-content h3 { color: #1a2a6c; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
-        .copy-prompt-btn { background-color: #ffc107; color: #333; border: none; padding: 10px 20px; font-size: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 20px; display: block; width: 100%; text-align: center; }
-        .copy-prompt-btn:hover { background-color: #e0a800; }
+        .ai-output-content { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; line-height: 1.6; font-size: 15px; margin-top: 15px; }
+        .ai-output-content h3 { color: #1a2a6c; margin-top: 0px; margin-bottom: 10px; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+        .ai-output-content ul { padding-left: 20px; }
+        .ai-output-content li { margin-bottom: 15px; }
+        .ai-output-content strong { color: #c82333; }
+        
+        #chart-container { width: 100%; max-height: 250px; margin-bottom: 20px; display: none; }
+        
+        .prompt-container { margin-top: 20px; background: #e9ecef; padding: 15px; border-radius: 8px; border-left: 5px solid #ffc107; display: flex; flex-direction: column; gap: 10px; }
+        .prompt-title { font-weight: bold; color: #1a2a6c; margin-bottom: 5px; }
+        
+        .btn-prompt-1 { background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-prompt-1:hover { background-color: #138496; }
+        
+        .btn-prompt-2 { background-color: #ffc107; color: #333; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-prompt-2:hover { background-color: #e0a800; }
+        
+        .btn-prompt-3 { background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-prompt-3:hover { background-color: #218838; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -53,8 +65,8 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 id="ui-analytics-title" style="color: #6f42c1; margin: 0;">🧠 Pedagogical Analytics (Auto-Extract)</h2>
             <select id="app-language" onchange="changeLanguage()" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold; cursor: pointer;">
-                <option value="en">🇬🇧 English</option>
                 <option value="vi">🇻🇳 Tiếng Việt</option>
+                <option value="en">🇬🇧 English</option>
             </select>
         </div>
         
@@ -85,12 +97,21 @@
                 <th class="sortable" onclick="setSort('status')"><span id="ui-col-status">Status</span> ↕</th>
                 <th class="sortable" onclick="setSort('progress')"><span id="ui-col-progress">Progress</span> ↕</th>
                 <th class="sortable" onclick="setSort('duration')"><span id="ui-col-duration">Duration</span> ↕</th>
-                <th><span id="ui-col-wrong">Wrong Answers</span></th>
+                <th><span id="ui-col-wrong">Wrong Answers</span>
+                    <select id="filter-wrong" class="filter-select" onchange="renderTable()">
+                        <option value="">All</option><option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option><option value="Q5">Q5</option><option value="Q6">Q6</option><option value="Q7">Q7</option>
+                    </select>
+                </th>
+                <th><span id="ui-col-topics">Review Topics</span>
+                    <select id="filter-topic" class="filter-select" onchange="renderTable()">
+                        <option value="">All Topics</option>
+                    </select>
+                </th>
                 <th style="text-align: center;"><span id="ui-col-action">Action</span></th>
             </tr>
         </thead>
         <tbody id="student-list">
-            <tr><td colspan="8" style="text-align: center;">Loading data from Firebase...</td></tr>
+            <tr><td colspan="9" style="text-align: center;">Loading data from Firebase...</td></tr>
         </tbody>
     </table>
 
@@ -98,8 +119,16 @@
         <div class="modal-box">
             <button class="modal-close" onclick="closeModal('ai-result-modal')">X</button>
             <h2 id="ai-result-title" style="margin-top: 0; color: #6f42c1;">Analytics Result</h2>
+            
+            <div id="chart-container"><canvas id="analysisChart"></canvas></div>
             <div id="ai-output" class="ai-output-content"></div>
-            <button id="copy-prompt-btn" class="copy-prompt-btn" onclick="copyAIPrompt()">📋 Copy Prompt for AI (ChatGPT/Gemini)</button>
+            
+            <div class="prompt-container">
+                <div class="prompt-title" id="ui-prompt-title">AI Prompt Options (Chép lệnh AI):</div>
+                <button class="btn-prompt-1" id="btn-prompt-1" onclick="copyPrompt('deep_analysis')">Copy prompt AI for deep analysis</button>
+                <button class="btn-prompt-2" id="btn-prompt-2" onclick="copyPrompt('activity')">Copy prompt AI for activity suggestions</button>
+                <button class="btn-prompt-3" id="btn-prompt-3" onclick="copyPrompt('exam')">Copy prompt AI for exam recommendations</button>
+            </div>
         </div>
     </div>
 
@@ -107,104 +136,87 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
         // ------------------------------------------------------------------
-        // 1. KỊCH BẢN SƯ PHẠM CÓ SẴN (DATABASE TÍCH HỢP)
+        // 1. DATA CẤU TRÚC MỚI THEO KỊCH BẢN PHÂN TÍCH
         // ------------------------------------------------------------------
-        const ANALYSIS_DB = {
-            en: {
-                mistakes: {
-                    "Q1": "<b>Question 1 (Concavity):</b> Students fail to connect the algebraic sign of the leading coefficient $a$ with the geometric shape of the parabola. <br><i>Advice:</i> Incorporate visual mnemonic devices (e.g., negative forms a frown, positive forms a smile).",
-                    "Q2": "<b>Question 2 (Vertex Formula):</b> Students forget the negative sign in $-\\frac{b}{2a}$ or $-\\frac{\\Delta}{4a}$. <br><i>Advice:</i> Briefly review the derivation of the vertex formula to help students logically deduce the negative sign.",
-                    "Q3": "<b>Question 3 (Axis of Symmetry):</b> Students confuse vertical lines ($x = c$) with horizontal lines ($y = c$) or make arithmetic errors evaluating $-\\frac{b}{2a}$. <br><i>Advice:</i> Provide a brief graphing activity drawing $x=-2$ and $y=-2$.",
-                    "Q4": "<b>Question 4 (Vertex Coordinates):</b> Sign errors during arithmetic division or order of operations errors when substituting $x$. <br><i>Advice:</i> Implement peer-review exercises for the first few calculation problems.",
-                    "Q5": "<b>Question 5 (Increasing/Decreasing):</b> High cognitive load. Students must determine concavity, find vertex, and map to intervals. <br><i>Advice:</i> Teach a 3-step routine: 1) Identify $a$, 2) Plot vertex, 3) Read graph left to right.",
-                    "Q6": "<b>Question 6 (Max/Min Value):</b> Counterintuitive thinking. Students assume negative $a$ implies 'minimum'. <br><i>Advice:</i> Use metaphors like mountains (maximum) and valleys (minimum).",
-                    "Q7": "<b>Question 7 (Comprehensive):</b> Analyzing isolated properties incorrectly due to rushing. <br><i>Advice:</i> Group students based on the specific option they chose and assign targeted mini-workshops."
-                },
-                time: {
-                    "Q1": "Prolonged time indicates a lack of fluency in foundational vocabulary. <i>Advice:</i> Quick warm-up drills.",
-                    "Q2": "Prolonged time indicates a lack of fluency in foundational vocabulary. <i>Advice:</i> Quick warm-up drills.",
-                    "Q3": "Extra time spent usually means students are hesitating between x= and y= formats. <i>Advice:</i> Create a quick-reference anchor chart.",
-                    "Q4": "High time expenditure due to arithmetic. <i>Advice:</i> Encourage scratch paper usage.",
-                    "Q5": "Open-ended input forces recall over recognition. <i>Advice:</i> Scaffold by providing a partial graph.",
-                    "Q6": "High time expenditure due to arithmetic. <i>Advice:</i> Encourage scratch paper usage.",
-                    "Q7": "Evaluating four statements requires significant processing. <i>Advice:</i> Teach 'process of elimination'."
-                },
-                attempts: {
-                    "Q1": "Multiple attempts indicate blind guessing (True/False). <i>Advice:</i> Require written justification.",
-                    "Q2": "High attempts mean trying variations of signs. <i>Advice:</i> Limit attempts to encourage pre-calculation.",
-                    "Q3": "High attempts mean trying variations of signs. <i>Advice:</i> Limit attempts to encourage pre-calculation.",
-                    "Q4": "Repeated attempts highlight minor arithmetic bugs. <i>Advice:</i> Emphasize double-checking signs.",
-                    "Q5": "Guessing numbers instead of using formula. <i>Advice:</i> Require scratchpad submission.",
-                    "Q6": "Repeated attempts highlight minor arithmetic bugs. <i>Advice:</i> Emphasize double-checking signs.",
-                    "Q7": "Sequential guessing reveals lack of holistic view. <i>Advice:</i> Teach quick sketching before reading options."
-                }
-            },
+        const PEDAGOGY_DATA = {
             vi: {
                 mistakes: {
-                    "Q1": "<b>Câu hỏi 1 (Chiều biến thiên):</b> Học sinh chưa liên kết được dấu của hệ số $a$ với hình dáng đồ thị. <br><i>Lời khuyên:</i> Đưa các mẹo ghi nhớ trực quan (âm = úp/buồn, dương = ngửa/cười).",
-                    "Q2": "<b>Câu hỏi 2 (Công thức Đỉnh):</b> Học sinh quên dấu trừ trong công thức $-\\frac{b}{2a}$ hoặc tung độ. <br><i>Lời khuyên:</i> Ôn tập ngắn gọn cách xây dựng công thức đỉnh để suy luận logic ra dấu trừ.",
-                    "Q3": "<b>Câu hỏi 3 (Trục đối xứng):</b> Nhầm lẫn giữa $x = c$ và $y = c$ hoặc sai sót số học. <br><i>Lời khuyên:</i> Thiết kế hoạt động vẽ đồ thị nhanh để phân biệt đường ngang/dọc.",
-                    "Q4": "<b>Câu hỏi 4 (Tọa độ Đỉnh):</b> Mắc lỗi dấu khi chia hoặc lỗi thứ tự thực hiện phép tính khi thay số. <br><i>Lời khuyên:</i> Triển khai đánh giá đồng đẳng (peer-review) để phát hiện sớm lỗi số học.",
-                    "Q5": "<b>Câu hỏi 5 (Đồng biến/Nghịch biến):</b> Tải lượng nhận thức cao, không kết nối được bề lõm và đỉnh. <br><i>Lời khuyên:</i> Hướng dẫn quy trình 3 bước: Xác định a -> Chấm đỉnh -> Đọc đồ thị trái sang phải.",
-                    "Q6": "<b>Câu hỏi 6 (Max/Min):</b> Tư duy ngược, cho rằng $a$ âm là giá trị 'nhỏ nhất'. <br><i>Lời khuyên:</i> Sử dụng ẩn dụ thực tế như đỉnh núi (cực đại) và thung lũng (cực tiểu).",
-                    "Q7": "<b>Câu hỏi 7 (Tổng hợp):</b> Phân tích sai do vội vàng hoặc áp dụng sai nền tảng. <br><i>Lời khuyên:</i> Chia nhóm học sinh theo đáp án sai để giao bài tập vi mô có mục tiêu."
+                    "Q1": { qContent: 'Cho hàm số $y = -3x^2 + 5x - 2$. Phát biểu "Parabol của hàm số này có bề lõm quay xuống" là đúng hay sai?', studentChoice: 'B (False)', gap: 'Nhận diện hệ số $a$ và mối liên hệ với hình dáng đồ thị.', reason: 'Học sinh thường nhầm lẫn máy móc. Khi thấy số $-3$ (số âm), các em có thể liên tưởng đến việc phát biểu đó là "sai" (negative bias) thay vì tập trung vào tính chất hình học.', advice: 'Sử dụng quy tắc "Miệng cười - Miệng mếu". Nếu $a > 0$ $\\to$ Parabol "cười" (lõm lên). Nếu $a < 0$ $\\to$ Parabol "mếu" (lõm xuống). Cho học sinh vẽ một mặt mếu ngay cạnh hệ số $a = -3$.' },
+                    "Q2": { qContent: 'Công thức tổng quát cho tọa độ đỉnh của Parabol $y = ax^2 + bx + c$ là gì?', studentChoice: 'A, D (Thiếu dấu $-$ ở hoành độ) hoặc C (Thiếu dấu $-$ ở tung độ).', gap: 'Ghi nhớ công thức đại số.', reason: 'Nhầm lẫn với công thức nghiệm của phương trình bậc hai hoặc định lý Vi-ét ($x = -b/a$). Với tung độ, các em thường quên dấu "$-$" trước $\\Delta$ vì nghĩ rằng $\\Delta$ đã đủ phức tạp rồi.', advice: 'Cho học sinh viết công thức $I\\left(-\\frac{b}{2a}; -\\frac{\\Delta}{4a}\\right)$ ra lề vở mỗi khi làm bài. Nhấn mạnh: "Cả x và y của đỉnh đều có dấu trừ đứng trước phân số".' },
+                    "Q3": { qContent: 'Xác định phương trình trục đối xứng của $y = -4x^2 - 16x + 3$.', studentChoice: 'C, D ($y = -2$ hoặc $y = 2$) hoặc A ($x = 2$).', gap: 'Định dạng phương trình đường thẳng và kĩ năng tính toán số thực.', reason: 'Với đáp án C/D, học sinh nhầm giữa đường thẳng đứng ($x=k$) và đường nằm ngang ($y=k$). Với đáp án A, học sinh sai dấu khi thực hiện phép chia $-\\frac{-16}{2 \\cdot (-4)}$.', advice: 'Nhấn mạnh "Trục đối xứng đi qua hoành độ đỉnh, nên phải là x =". Khi tính toán, dạy quy tắc "đếm dấu trừ": nếu có 1 hoặc 3 dấu trừ trong phép tính $\\to$ kết quả chắc chắn âm.' },
+                    "Q4": { qContent: 'Xác định tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', studentChoice: 'B, D (Sai hoành độ $x$) hoặc A (Sai tung độ $y$).', gap: 'Tính toán số học và thay số vào biểu thức.', reason: 'Không đóng ngoặc số âm khi bình phương, ví dụ tính $-2 \\cdot -2^2$ thay vì $-2 \\cdot (-2)^2$.', advice: 'Hướng dẫn học sinh sử dụng phím CALC trên máy tính cầm tay. Sau khi tìm được $x = -2$, nhập hàm số vào máy và ấn CALC $-2$ để máy tự tính $y$.' },
+                    "Q5": { qContent: 'Hàm số $y = x^2 - 4x + 3$ đồng biến trên khoảng $(..., +\\infty)$.', studentChoice: 'Điền sai số (khác 2).', gap: 'Liên hệ giữa hoành độ đỉnh và sự biến thiên.', reason: 'Học sinh không hiểu rằng "điểm quay đầu" của hàm số chính là hoành độ đỉnh $x_I = -\\frac{b}{2a}$.', advice: 'Yêu cầu học sinh luôn vẽ Bảng biến thiên nháp cho mọi bài tập về tính đơn điệu. Nhấn mạnh: "Con số điền vào khoảng đồng/nghịch biến phải lấy từ dòng của $x$".' },
+                    "Q6": { qContent: 'Hàm số $y = -x^2 + 4x - 3$ có GTLN hay GTNN, và giá trị đó là bao nhiêu?', studentChoice: 'A, D (Chọn Nhỏ nhất) hoặc C (Chọn Max = 2).', gap: 'Phân biệt cực trị dựa vào hệ số $a$ và nhầm lẫn giữa giá trị $x$ và $y$.', reason: 'Thấy $a = -1$ (số nhỏ) nên nghĩ là "Nhỏ nhất". Hoặc tính ra $x_I = 2$ rồi lấy luôn con số đó làm giá trị (trong khi giá trị phải là $y$).', advice: 'Sử dụng hình ảnh thực tế: $a < 0$ là "Ngọn núi" $\\to$ có Đỉnh cao nhất (Max). $a > 0$ là "Cái thung lũng" $\\to$ có Đáy thấp nhất (Min). Luôn nhắc nhở: "Hỏi giá trị là hỏi $y$".' },
+                    "Q7": { qContent: 'Tìm phát biểu SAI cho hàm số $y = 2x^2 - 8x + 6$.', studentChoice: 'A, B hoặc C.', gap: 'Phân tích đa chiều và đọc hiểu.', reason: 'Học sinh thường bị "rối" khi phải kiểm tra quá nhiều tính chất cùng một lúc. Các em thường bỏ qua từ "SAI" trong câu hỏi.', advice: 'Dạy học sinh kỹ thuật "Phác họa nhanh". Vẽ nháp $a > 0$ (ngửa), $x_I = 2$. Đối chiếu với các đáp án sẽ thấy ngay câu D (đồng biến trên $(-\\infty, 2)$) là vô lý vì nhánh đó đang đi xuống.' }
                 },
                 time: {
-                    "Q1": "Kéo dài thời gian cho thấy thiếu lưu loát thuật ngữ nền tảng. <i>Lời khuyên:</i> Khởi động nhanh đầu giờ.",
-                    "Q2": "Kéo dài thời gian cho thấy thiếu lưu loát công thức nền tảng. <i>Lời khuyên:</i> Khởi động nhanh đầu giờ.",
-                    "Q3": "Do dự giữa định dạng x= và y=. <i>Lời khuyên:</i> Chuẩn bị bảng tra cứu nhanh.",
-                    "Q4": "Tốn thời gian do tính toán và trí nhớ làm việc quá tải. <i>Lời khuyên:</i> Bắt buộc dùng giấy nháp.",
-                    "Q5": "Nhập liệu ép học sinh phải tự nhớ lại toàn bộ. <i>Lời khuyên:</i> Cung cấp một phần phác họa đồ thị.",
-                    "Q6": "Tốn thời gian do tính toán và trí nhớ làm việc quá tải. <i>Lời khuyên:</i> Bắt buộc dùng giấy nháp.",
-                    "Q7": "Kiểm chứng 4 mệnh đề đòi hỏi thời gian lớn. <i>Lời khuyên:</i> Dạy phương pháp loại trừ."
+                    "Q1": { qContent: 'Xác định tính đúng/sai của phát biểu "Bề lõm quay xuống" cho hàm $y = -3x^2 + 5x - 2$.', gap: 'Phản xạ liên kết giữa dấu hệ số $a$ và hình dáng đồ thị.', reason: 'Học sinh thường phải dừng lại để nhớ lại quy ước (âm là lên hay xuống) thay vì có phản xạ hình ảnh tức thời.', advice: 'Dạy học sinh mẹo "Mặt cười/Mặt mếu" ($a < 0$ $\\to$ quay xuống). Ghi chú dấu của $a$ ngay lập tức khi đọc đề.' },
+                    "Q2": { qContent: 'Chọn công thức tổng quát đúng cho tọa độ đỉnh $I$.', gap: 'Các đáp án gây nhiễu có hình thức rất giống nhau.', reason: 'Hiện tượng "loạn thị giác". Học sinh phải nhìn đi nhìn lại các phương án để so sánh từng dấu cộng/trừ.', advice: 'Yêu cầu tự viết công thức ra nháp trước khi nhìn vào các lựa chọn. Đối chiếu kết quả mình đã viết sẽ nhanh hơn.' },
+                    "Q3": { qContent: 'Tìm phương trình trục đối xứng của $y = -4x^2 - 16x + 3$.', gap: 'Phân biệt định dạng $x = ...$ và $y = ...$, xử lý dấu tính toán.', reason: 'Học sinh tốn thời gian tính nhẩm $-\\frac{b}{2a}$ với nhiều dấu âm và phân vân giữa việc chọn $x$ hay $y$.', advice: 'Nhấn mạnh "Trục đối xứng là đường thẳng đứng, luôn bắt đầu bằng $x=$". Dạy cách đếm dấu trừ.' },
+                    "Q4": { qContent: 'Tìm tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', gap: 'Kỹ năng thay số và tính toán.', reason: 'Sai lầm trong tính toán thủ công (bình phương số âm). Khi tính sai, học sinh phải làm lại từ đầu.', advice: 'Hướng dẫn sử dụng phím CALC trên máy tính hoặc chức năng tìm Max/Min trong mode giải phương trình.' },
+                    "Q5": { qContent: 'Điền số vào khoảng đồng biến $(..., +\\infty)$ của $y = x^2 - 4x + 3$.', gap: 'Chuyển đổi từ công thức sang sự biến thiên trên trục số.', reason: 'Ghi nhớ máy móc "đồng biến khi $a > 0$ và $x > ...$" thay vì sử dụng hình ảnh. Não bộ xử lý chậm logic chữ.', advice: 'Luôn yêu cầu vẽ nhanh một bảng biến thiên sơ lược. Hình ảnh đồ thị sẽ giúp xác định khoảng nhanh hơn.' },
+                    "Q6": { qContent: 'Xác định hàm $y = -x^2 + 4x - 3$ có Max hay Min và giá trị đó là bao nhiêu.', gap: 'Quy trình 2 bước: 1. Xét $a$; 2. Tính $y_I$.', reason: 'Nhầm lẫn giữa "giá trị đạt được tại $x$" và "giá trị của hàm số $y$". Tính ra $x$ rồi dừng lại suy nghĩ.', advice: 'Dùng hình ảnh "Đỉnh núi" (Max) và "Thung lũng" (Min). Khắc sâu: "Giá trị" luôn là $y$.' },
+                    "Q7": { qContent: 'Kiểm tra tính đúng đắn của 4 mệnh đề về tính chất của $y = 2x^2 - 8x + 6$.', gap: 'Lượng kiến thức phải kiểm tra quá lớn.', reason: 'Đây là "hố đen thời gian". Học sinh kiểm tra từng đáp án A, B, C một cách tuần tự.', advice: 'Dạy chiến thuật "Phác thảo đồ thị nhanh" (Quick Sketch). Kiểm chứng cả 4 mệnh đề cùng lúc bằng mắt thường.' }
                 },
                 attempts: {
-                    "Q1": "Đoán mò giữa True/False. <i>Lời khuyên:</i> Yêu cầu viết 1 câu giải thích trước khi chốt.",
-                    "Q2": "Đoán dấu liên tục. <i>Lời khuyên:</i> Giới hạn số lần thử để ép nháp ra giấy.",
-                    "Q3": "Đoán dấu liên tục. <i>Lời khuyên:</i> Giới hạn số lần thử để ép nháp ra giấy.",
-                    "Q4": "Lỗi số học nhỏ lẻ. <i>Lời khuyên:</i> Rà soát lại dấu và thứ tự tính toán.",
-                    "Q5": "Đoán mò con số thay vì tính công thức. <i>Lời khuyên:</i> Yêu cầu nộp lại giấy nháp.",
-                    "Q6": "Lỗi số học nhỏ lẻ. <i>Lời khuyên:</i> Rà soát lại dấu và thứ tự tính toán.",
-                    "Q7": "Thiếu cái nhìn tổng thể. <i>Lời khuyên:</i> Dạy thói quen phác họa đồ thị trước khi đọc đáp án."
+                    "Q1": { qContent: 'Cho $y = -3x^2 + 5x - 2$. Phát biểu "Bề lõm quay xuống" là đúng hay sai?', gap: 'Liên kết dấu hệ số $a$ và hướng mở của Parabol.', reason: 'Câu hỏi Đúng/Sai (50/50), học sinh thường chọn đại. Khi sai, các em chọn ngược lại mà không suy nghĩ tại sao.', advice: 'Yêu cầu dùng bút đỏ khoanh tròn hệ số $a$. Thực hiện quy tắc bàn tay: "Tay ngửa là dương, tay úp là âm".' },
+                    "Q2": { qContent: 'Chọn công thức tổng quát đúng cho tọa độ đỉnh $I$.', gap: 'Ghi nhớ chính xác các ký hiệu và dấu trong công thức.', reason: 'Các đáp án gây nhiễu đảo dấu khiến học sinh "loạn thị giác". Các em thử chọn từng cái cho đến khi đúng (học ngược).', advice: 'Yêu cầu tự viết công thức ra giấy nháp trước khi nhìn màn hình. Nhấn mạnh: "Cả x và y đều phải có dấu trừ".' },
+                    "Q3": { qContent: 'Tìm trục đối xứng của $y = -4x^2 - 16x + 3$.', gap: 'Phân biệt phương trình đường thẳng đứng ($x=$) và đường nằm ngang ($y=$).', reason: 'Học sinh thường thử sai ở phần ký hiệu $x$ và $y$ trước, sau đó mới thử sai tiếp ở phần dấu của con số.', advice: 'Nhấn mạnh "Trục đối xứng đi qua hoành độ đỉnh $\\to$ phải là $x$". Vẽ Parabol, kẻ trục đối xứng và ghi chữ $x$ thật lớn.' },
+                    "Q4": { qContent: 'Tìm tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', gap: 'Kỹ năng tính toán số học (thay $x$ tìm $y$).', reason: 'Tính được $x = -2$ nhưng ngại tính $y$ vì sợ sai dấu. Thử chọn các đáp án có $x = -2$ thay vì tự tính.', advice: 'Dạy sử dụng máy tính bỏ túi kiểm tra (phím CALC). Rèn luyện kỹ năng đóng ngoặc khi bình phương số âm: $(-2)^2$.' },
+                    "Q5": { qContent: 'Điền số vào khoảng đồng biến $(..., +\\infty)$ của $y = x^2 - 4x + 3$.', gap: 'Chuyển đổi từ tọa độ đỉnh sang khoảng biến thiên trên trục hoành.', reason: 'Là câu hỏi nhập liệu, học sinh thử điền đại các hệ số $a, b, c$ hoặc $0, 1$. Không hiểu số cần điền là hoành độ đỉnh.', advice: 'Luôn yêu cầu vẽ bảng biến thiên. Con số ngăn cách giữa mũi tên đi lên và đi xuống chính là con số cần điền.' },
+                    "Q6": { qContent: 'Xác định Max/Min của $y = -x^2 + 4x - 3$.', gap: 'Bản chất cực trị là tung độ đỉnh và mối quan hệ với bề lõm.', reason: 'Thử sai qua 2 bước: Chọn nhầm Max/Min (do không nhìn $a$) và chọn nhầm giữa giá trị $x$ và $y$.', advice: 'Sử dụng hình ảnh "Đỉnh núi" và "Đáy thung lũng". Hỏi: "Ta đang đứng ở độ cao bao nhiêu?" (là $y$).' },
+                    "Q7": { qContent: 'Kiểm tra 4 mệnh đề về tính chất của $y = 2x^2 - 8x + 6$.', gap: 'Khả năng tổng hợp và kiểm tra nhiều thông tin cùng lúc.', reason: 'Học sinh thấy câu dài nên bấm đại, sai thì bấm cái tiếp theo. Đây là tâm lý "lười suy nghĩ".', advice: 'Dạy phương pháp loại trừ. Phác thảo nhanh đồ thị ra nháp trong 5 giây giúp nhìn ra mệnh đề sai nhanh hơn.' }
+                }
+            },
+            en: {
+                mistakes: {
+                    "Q1": { qContent: 'Given $y = -3x^2 + 5x - 2$. Is the statement "The parabola concaves down" True or False?', studentChoice: 'B (False).', gap: 'Identifying coefficient $a$ and its relationship to the graph\'s shape.', reason: 'Students often suffer from "negative bias." Seeing $-3$, they instinctively associate the statement with being "false".', advice: 'Use the "Smile or Frown" rule. $a > 0$ $\\to$ "smiles" (opens upward). $a < 0$ $\\to$ "frowns" (opens downward).' },
+                    "Q2": { qContent: 'What is the general formula for the vertex $I$ of the parabola $y = ax^2 + bx + c$?', studentChoice: 'A, D (Missing minus for $x$) or C (Missing minus for $y$).', gap: 'Rote memorization of algebraic formulas.', reason: 'Confusion with the quadratic formula. For $y$, students assume $\\Delta$ is complex enough and doesn\'t "need" an extra minus sign.', advice: 'Have students write $I\\left(-\\frac{b}{2a}; -\\frac{\\Delta}{4a}\\right)$ on the margin. Emphasize: "Both x and y MUST have a minus sign".' },
+                    "Q3": { qContent: 'Determine the axis of symmetry for $y = -4x^2 - 16x + 3$.', studentChoice: 'C, D ($y = -2$ or $y = 2$) or A ($x = 2$).', gap: 'Line equation formatting and arithmetic with signed numbers.', reason: 'For C/D, students confuse vertical lines ($x=k$) with horizontal lines ($y=k$). For A, they miscalculate $-\\frac{-16}{2 \\cdot (-4)}$.', advice: 'Stress that "The axis of symmetry passes through the $x$-axis, so it starts with $x =$". Teach the "Sign Counting" rule.' },
+                    "Q4": { qContent: 'Determine the coordinates of the vertex for $y = -2x^2 - 8x - 10$.', studentChoice: 'B, D (Incorrect $x$) or A (Incorrect $y$).', gap: 'Basic arithmetic and substitution skills.', reason: 'A classic mistake is failing to use parentheses when squaring negative numbers: $-2 \\cdot -2^2$ instead of $-2 \\cdot (-2)^2$.', advice: 'Show students how to use the CALC function on their calculators to prevent manual sign errors during substitution.' },
+                    "Q5": { qContent: 'The function $y = x^2 - 4x + 3$ is increasing on the interval $(..., +\\infty)$.', studentChoice: 'Incorrect number (not 2).', gap: 'Connecting the vertex to the function\'s monotonicity.', reason: 'Students often don\'t realize the "turning point" of the function is exactly the $x$-coordinate of the vertex.', advice: 'Require a Table of Variation. Remind them: "The number used for intervals must be pulled from the $x$ row of your table".' },
+                    "Q6": { qContent: 'Does $y = -x^2 + 4x - 3$ have a Max or Min, and what is its value?', studentChoice: 'A, D (Selected Minimum) or C (Selected Max = 2).', gap: 'Differentiating extrema based on $a$ and confusing $x$ with $y$.', reason: 'Students see $a = -1$ (small number) and think "Minimum." Or, they calculate $x_I = 2$ and stop there, forgetting the "value" is $y$.', advice: 'Use the Mountain vs. Valley analogy. $a < 0$ is a "Mountain" (Max). Always remind them: "A value refers to $y$".' },
+                    "Q7": { qContent: 'Which statement is FALSE for $y = 2x^2 - 8x + 6$?', studentChoice: 'A, B, or C.', gap: 'Multi-step analysis and reading comprehension.', reason: 'Analytical fatigue. Checking concavity, vertex, axis, and intervals simultaneously is exhausting. They guess after the first steps.', advice: 'Teach the "Quick Sketch" technique. In 5 seconds, sketch shape and vertex to verify statements visually.' }
+                },
+                time: {
+                    "Q1": { qContent: 'Determine the truth of "Concaves down" for $y = -3x^2 + 5x - 2$.', gap: 'Mental link between the sign of $a$ and the graph\'s orientation.', reason: 'Students pause to recall the rule (negative equals up or down?) rather than having an immediate visual reflex.', advice: 'Teach the "Smile/Frown" mnemonic. Encourage marking the sign of $a$ as soon as they read the function.' },
+                    "Q2": { qContent: 'Select the correct general formula for vertex $I$.', gap: 'Visual distractors that look almost identical.', reason: '"Visual clutter" effect. Students move their eyes back and forth between options to compare tiny plus/minus signs.', advice: 'Ask students to write down the formula from memory before looking at the options. Matching their own answer is faster.' },
+                    "Q3": { qContent: 'Find the axis of symmetry for $y = -4x^2 - 16x + 3$.', gap: 'Distinguishing between $x = ...$ and $y = ...$ formats.', reason: 'Students waste time mentally calculating $-\\frac{b}{2a}$ with several negatives and hesitating between $x$ or $y$.', advice: 'Emphasize that "The axis of symmetry is a vertical line; it always starts with $x=$". Teach the "Sign Counting" rule.' },
+                    "Q4": { qContent: 'Determine the vertex for $y = -2x^2 - 8x - 10$.', gap: 'Substitution skills and evaluating the function.', reason: 'Arithmetic errors. When the result doesn\'t match an option, students panic and restart the whole process.', advice: 'Guide students to use the CALC key on their calculators after finding $x$.' },
+                    "Q5": { qContent: 'Fill in the blank for the increasing interval $(..., +\\infty)$ of $y = x^2 - 4x + 3$.', gap: 'Mapping a formula to behavior on the number line.', reason: 'Rote memorization of logic instead of using visuals. Processing heavy logical conditions slows down the brain.', advice: 'Always require a quick Table of Variation or a sketch. The visual determines the interval faster.' },
+                    "Q6": { qContent: 'Identify if $y = -x^2 + 4x - 3$ has a Max or Min and find its value.', gap: 'Two-step process: 1. Sign of $a$; 2. Calculating $y_I$.', reason: 'Confusion between "at $x$" (location) and "value of the function $y$." Students find $x$ and stall.', advice: 'Use the "Mountain Peak" (Max) and "Valley Floor" (Min) analogy. Reinforce: "Value" refers to $y$.' },
+                    "Q7": { qContent: 'Verify 4 statements about the properties of $y = 2x^2 - 8x + 6$.', gap: 'High cognitive load due to the volume of information to check.', reason: 'Students usually check options A, B, C sequentially. If D is the answer, they spend 3-4 times longer.', advice: 'Teach the "Quick Sketch" strategy. Drawing the shape and vertex helps verify all 4 statements visually.' }
+                },
+                attempts: {
+                    "Q1": { qContent: 'Is the statement "The parabola concaves down" for $y = -3x^2 + 5x - 2$ True or False?', gap: 'Linking the sign of $a$ to the direction of opening.', reason: 'Since it is a True/False question, students often guess without checking $a$. They simply click the other option if wrong.', advice: 'Have students circle the coefficient $a$ in red. Use the "Hand Rule": Palm up is positive, palm down is negative.' },
+                    "Q2": { qContent: 'Select the correct general formula for the vertex $I$.', gap: 'Memorizing specific signs and positions in the formula.', reason: 'The distractors are designed with swapped signs. Students click through until they see "Correct" (learning backward).', advice: 'Ask students to write the formula on paper before looking at the screen. "Both coordinates must have a minus sign".' },
+                    "Q3": { qContent: 'Determine the axis of symmetry for $y = -4x^2 - 16x + 3$.', gap: 'Differentiating between vertical ($x=$) and horizontal ($y=$) lines.', reason: 'Students often fail on the variable symbol first (choosing $y$), then fail again on the arithmetic sign.', advice: 'Highlight that the axis passes through the x-coordinate, so it MUST be $x =$. Have them draw a parabola and label it with a large "$x$".' },
+                    "Q4": { qContent: 'Determine the vertex for $y = -2x^2 - 8x - 10$.', gap: 'Arithmetic skills, substituting $x$ to find $y$.', reason: 'Students find $x = -2$ but are hesitant to calculate $y$ for fear of sign errors. They try options with $x = -2$ instead.', advice: 'Teach them to use the calculator\'s CALC key. Practice using parentheses for squaring negatives: $(-2)^2$.' },
+                    "Q5": { qContent: 'Fill in the blank for the increasing interval $(..., +\\infty)$ of $y = x^2 - 4x + 3$.', gap: 'Mapping vertex coordinates to the variation intervals.', reason: 'Students guess by typing coefficients or numbers like $0, 1$. They don\'t grasp that the blank is the vertex\'s x-coordinate.', advice: 'Always require a Table of Variation (ToV). The number separating the arrows is the input value.' },
+                    "Q6": { qContent: 'Identify the Max/Min of $y = -x^2 + 4x - 3$.', gap: 'Understanding that extrema are vertex y-coordinates.', reason: 'Two-step failure: Guessing between Max/Min (ignoring $a$), and confusing the $x$ position with the $y$ value.', advice: 'Use the "Mountain Peak" and "Valley Floor" analogy. Ask: "At what height are we standing?" ($y$).' },
+                    "Q7": { qContent: 'Verify 4 statements about the properties of $y = 2x^2 - 8x + 6$.', gap: 'Ability to synthesize multiple pieces of information.', reason: 'Students find the question too long and click randomly until they hit the right one (cognitive laziness).', advice: 'Teach the "Quick Sketching" method to spot the false statement faster than calculating each option.' }
                 }
             }
         };
 
         const UI_TEXT = {
             en: {
-                title: "🎮 Student Progress Dashboard 🎮",
-                analyticsTitle: "🧠 Pedagogical Analytics (Auto-Extract)",
-                selectClass: "Select Class to Analyze:",
-                btnMistakes: "1. Top 3 Mistakes",
-                btnTime: "2. Top 3 Time-Consuming",
-                btnAttempts: "3. Top 3 Most Attempts",
-                colClass: "Class", colMembers: "Group Members", colMode: "Mode", colStatus: "Status", colProgress: "Progress", colDuration: "Duration", colWrong: "Wrong Answers", colAction: "Action",
-                copyPromptBtn: "📋 Copy Prompt for AI (ChatGPT/Gemini)"
+                title: "🎮 Student Progress Dashboard 🎮", analyticsTitle: "🧠 Pedagogical Analytics (Auto-Extract)", selectClass: "Select Class to Analyze:",
+                btnMistakes: "1. Top 3 Mistakes", btnTime: "2. Top 3 Time-Consuming", btnAttempts: "3. Top 3 Most Attempts",
+                colClass: "Class", colMembers: "Group Members", colMode: "Mode", colStatus: "Status", colProgress: "Progress", colDuration: "Duration", colWrong: "Wrong Answers", colTopics: "Review Topics", colAction: "Action",
+                promptTitle: "AI Prompt Options:", btnPrompt1: "Copy prompt AI for deep analysis", btnPrompt2: "Copy prompt AI for activity suggestions", btnPrompt3: "Copy prompt AI for exam recommendations",
+                reportTitleMistakes: "Knowledge Gap Analysis", reportTitleTime: "Time-on-Task Analysis", reportTitleAttempts: "Attempt Analysis (Trial and Error)"
             },
             vi: {
-                title: "🎮 Bảng Điều Khiển Tiến Độ Học Tập 🎮",
-                analyticsTitle: "🧠 Phân Tích Sư Phạm (Tự Động)",
-                selectClass: "Chọn Lớp Cần Phân Tích:",
-                btnMistakes: "1. Top 3 Lỗi Sai Nhiều Nhất",
-                btnTime: "2. Top 3 Câu Tốn Thời Gian Nhất",
-                btnAttempts: "3. Top 3 Câu Thử Sai Nhiều Nhất",
-                colClass: "Lớp", colMembers: "Thành Viên", colMode: "Chế Độ", colStatus: "Trạng Thái", colProgress: "Tiến Độ", colDuration: "Thời Gian", colWrong: "Câu Trả Lời Sai", colAction: "Hành Động",
-                copyPromptBtn: "📋 Sao Chép Prompt Cho AI (ChatGPT/Gemini)"
+                title: "🎮 Bảng Điều Khiển Tiến Độ Học Tập 🎮", analyticsTitle: "🧠 Phân Tích Sư Phạm (Tự Động)", selectClass: "Chọn Lớp Cần Phân Tích:",
+                btnMistakes: "1. Top 3 Lỗi Sai Nhiều Nhất", btnTime: "2. Top 3 Câu Tốn Thời Gian Nhất", btnAttempts: "3. Top 3 Câu Thử Sai Nhiều Nhất",
+                colClass: "Lớp", colMembers: "Thành Viên", colMode: "Chế Độ", colStatus: "Trạng Thái", colProgress: "Tiến Độ", colDuration: "Thời Gian", colWrong: "Câu Sai", colTopics: "Chủ Đề Ôn Tập", colAction: "Hành Động",
+                promptTitle: "Lựa Chọn Lệnh AI (Copy Prompt):", btnPrompt1: "Sao chép lệnh AI giúp phân tích sâu hơn", btnPrompt2: "Sao chép lệnh AI giúp gợi ý hoạt động học tập", btnPrompt3: "Sao chép lệnh AI giúp đề xuất nội dung kiểm tra",
+                reportTitleMistakes: "Phân Tích Lỗ Hổng Kiến Thức", reportTitleTime: "Phân Tích Thời Gian Thực Hiện", reportTitleAttempts: "Phân Tích Số Lần Thử (Thử và Sai)"
             }
         };
 
-        // ------------------------------------------------------------------
-        // 2. FIREBASE & DATA LOGIC
-        // ------------------------------------------------------------------
-        const firebaseConfig = {
-            apiKey: "AIzaSyBFudz97TIDFD7dUZuVIKB-IH0vcz6bA-M",
-            authDomain: "the-meow-thematics-quest.firebaseapp.com",
-            databaseURL: "https://the-meow-thematics-quest-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "the-meow-thematics-quest",
-            storageBucket: "the-meow-thematics-quest.firebasestorage.app",
-            messagingSenderId: "640229575133",
-            appId: "1:640229575133:web:28c8533120bcdbe2b78e34"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyBFudz97TIDFD7dUZuVIKB-IH0vcz6bA-M", authDomain: "the-meow-thematics-quest.firebaseapp.com", databaseURL: "https://the-meow-thematics-quest-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "the-meow-thematics-quest", storageBucket: "the-meow-thematics-quest.firebasestorage.app", messagingSenderId: "640229575133", appId: "1:640229575133:web:28c8533120bcdbe2b78e34" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
@@ -212,24 +224,35 @@
         let currentFilteredData = [];
         let sortCol = '';
         let sortAsc = true;
-        let currentPromptTemplate = ""; // Lưu trữ prompt tự tạo
+        let currentChart = null;
+        let currentTop3List = []; // Lưu danh sách câu hỏi để truyền vào Prompt
+        let currentAnalysisType = ""; 
 
         db.ref('sessions').on('value', (snapshot) => {
             const data = snapshot.val();
             rawData = [];
+            let allTopics = new Set();
             if (data) {
                 for (let id in data) {
                     let row = data[id];
                     row.firebaseId = id; 
                     rawData.push(row);
+                    if (row.reviewTopics && !row.reviewTopics.includes("Perfect Run")) {
+                        row.reviewTopics.split(",").forEach(t => allTopics.add(t.trim()));
+                    }
                 }
             }
+            updateTopicDropdown(Array.from(allTopics));
             renderTable();
         });
 
-        // ------------------------------------------------------------------
-        // 3. UI LINGUISTIC TOGGLE
-        // ------------------------------------------------------------------
+        window.updateTopicDropdown = function(topics) { 
+            let select = document.getElementById("filter-topic"); let currentVal = select.value; 
+            select.innerHTML = '<option value="">All Topics</option>'; 
+            topics.sort().forEach(t => { if(t) select.innerHTML += `<option value="${t}">${t}</option>`; }); 
+            select.value = currentVal; 
+        };
+
         function changeLanguage() {
             const lang = document.getElementById('app-language').value;
             document.getElementById('ui-title').innerText = UI_TEXT[lang].title;
@@ -238,7 +261,6 @@
             document.getElementById('btn-top-mistakes').innerText = UI_TEXT[lang].btnMistakes;
             document.getElementById('btn-top-time').innerText = UI_TEXT[lang].btnTime;
             document.getElementById('btn-top-attempts').innerText = UI_TEXT[lang].btnAttempts;
-            document.getElementById('copy-prompt-btn').innerText = UI_TEXT[lang].copyPromptBtn;
             
             document.getElementById('ui-col-class').innerText = UI_TEXT[lang].colClass;
             document.getElementById('ui-col-members').innerText = UI_TEXT[lang].colMembers;
@@ -247,214 +269,207 @@
             document.getElementById('ui-col-progress').innerText = UI_TEXT[lang].colProgress;
             document.getElementById('ui-col-duration').innerText = UI_TEXT[lang].colDuration;
             document.getElementById('ui-col-wrong').innerText = UI_TEXT[lang].colWrong;
+            document.getElementById('ui-col-topics').innerText = UI_TEXT[lang].colTopics;
             document.getElementById('ui-col-action').innerText = UI_TEXT[lang].colAction;
             
-            renderTable(); // Update stats text
+            document.getElementById('ui-prompt-title').innerText = UI_TEXT[lang].promptTitle;
+            document.getElementById('btn-prompt-1').innerText = UI_TEXT[lang].btnPrompt1;
+            document.getElementById('btn-prompt-2').innerText = UI_TEXT[lang].btnPrompt2;
+            document.getElementById('btn-prompt-3').innerText = UI_TEXT[lang].btnPrompt3;
+            renderTable();
         }
 
-        // ------------------------------------------------------------------
-        // 4. DATA EXTRACTION ALGORITHMS
-        // ------------------------------------------------------------------
-        function extractTop3(dataList, type) {
+        function drawAnalysisChart(metricMap, type, lang) {
+            document.getElementById('chart-container').style.display = 'block';
+            let ctx = document.getElementById('analysisChart').getContext('2d');
+            if (currentChart) currentChart.destroy();
+            let labels = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"];
+            let dataPoints = [];
+
+            if(type === 'mistakes') {
+                labels.forEach(q => dataPoints.push(metricMap[q] || 0));
+                currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Frequency of Mistakes' : 'Số lần sai', data: dataPoints, backgroundColor: '#dc3545' }] }, options: { responsive: true, maintainAspectRatio: false } });
+            } else if (type === 'time') {
+                labels.forEach(q => dataPoints.push(metricMap[q] ? Math.round(metricMap[q].total / metricMap[q].count) : 0));
+                currentChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Avg Time (Seconds)' : 'Thời gian TB (Giây)', data: dataPoints, borderColor: '#6f42c1', backgroundColor: 'rgba(111, 66, 193, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+            } else if (type === 'attempts') {
+                labels.forEach(q => dataPoints.push(metricMap[q] ? (metricMap[q].total / metricMap[q].count).toFixed(1) : 0));
+                currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Avg Attempts' : 'Số lần thử TB', data: dataPoints, backgroundColor: '#ffc107' }] }, options: { responsive: true, maintainAspectRatio: false } });
+            }
+        }
+
+        function extractFullMetrics(dataList, type) {
             let metricMap = {};
-            
             dataList.forEach(row => {
                 if(type === 'mistakes') {
-                    // Xử lý chuỗi wrongAnswers (vd: "Q1, Q3, Q4")
                     if(row.wrongAnswers && row.wrongAnswers !== "None") {
-                        let qs = row.wrongAnswers.split(",").map(q => q.trim().substring(0,2)); // Lấy 2 ký tự đầu "Q1"
+                        let qs = row.wrongAnswers.split(",").map(q => q.trim().substring(0,2));
                         qs.forEach(q => { if(q.startsWith('Q')) metricMap[q] = (metricMap[q] || 0) + 1; });
                     }
-                } 
-                else if (type === 'time' && row.questionTimes) {
+                } else if (type === 'time' && row.questionTimes) {
                     for(let q in row.questionTimes) {
                         if(!metricMap[q]) metricMap[q] = { total: 0, count: 0 };
-                        metricMap[q].total += row.questionTimes[q];
-                        metricMap[q].count++;
+                        metricMap[q].total += row.questionTimes[q]; metricMap[q].count++;
                     }
-                }
-                else if (type === 'attempts' && row.questionAttempts) {
-                    // Giả định DB có cấu trúc questionAttempts
+                } else if (type === 'attempts' && row.questionAttempts) {
                     for(let q in row.questionAttempts) {
                         if(!metricMap[q]) metricMap[q] = { total: 0, count: 0 };
-                        metricMap[q].total += row.questionAttempts[q];
-                        metricMap[q].count++;
+                        metricMap[q].total += row.questionAttempts[q]; metricMap[q].count++;
                     }
                 }
             });
+            return metricMap;
+        }
+
+        function generateReport(type) {
+            currentAnalysisType = type;
+            const targetClass = document.getElementById('ai-target-class').value;
+            const lang = document.getElementById('app-language').value;
+            let analysisData = rawData;
+            if (targetClass !== "ALL") analysisData = rawData.filter(r => r.class === targetClass);
+            if(analysisData.length === 0) { alert(lang === 'en' ? "No data available for this class." : "Không có dữ liệu cho lớp này."); return; }
+
+            let fullMetrics = extractFullMetrics(analysisData, type);
+            drawAnalysisChart(fullMetrics, type, lang);
 
             let sortedArr = [];
             if(type === 'mistakes') {
-                sortedArr = Object.keys(metricMap).map(k => ({ q: k, val: metricMap[k] })).sort((a,b) => b.val - a.val);
+                sortedArr = Object.keys(fullMetrics).map(k => ({ q: k, val: fullMetrics[k] })).sort((a,b) => b.val - a.val);
             } else {
-                sortedArr = Object.keys(metricMap).map(k => ({ q: k, val: (metricMap[k].total / metricMap[k].count).toFixed(1) })).sort((a,b) => b.val - a.val);
+                sortedArr = Object.keys(fullMetrics).map(k => ({ q: k, val: (fullMetrics[k].total / fullMetrics[k].count).toFixed(1) })).sort((a,b) => b.val - a.val);
             }
             
-            return sortedArr.slice(0, 3);
-        }
-
-        // ------------------------------------------------------------------
-        // 5. REPORT GENERATION
-        // ------------------------------------------------------------------
-        function generateReport(type) {
-            const targetClass = document.getElementById('ai-target-class').value;
-            const lang = document.getElementById('app-language').value;
-            
-            let analysisData = rawData;
-            if (targetClass !== "ALL") analysisData = rawData.filter(r => r.class === targetClass);
-            
-            if(analysisData.length === 0) {
-                alert(lang === 'en' ? "No data available for this class." : "Không có dữ liệu cho lớp này.");
-                return;
-            }
-
-            // Gọi thuật toán trích xuất top 3
-            let top3Data = extractTop3(analysisData, type);
-            if(top3Data.length === 0) {
-                 alert(lang === 'en' ? "Insufficient metrics to analyze." : "Không đủ dữ liệu chi tiết để phân tích.");
-                 return;
-            }
+            let top3Data = sortedArr.slice(0, 3);
+            currentTop3List = top3Data.map(item => item.q); // Save top 3 for prompt generation
 
             let htmlContent = "";
-            let promptQuestionsContext = [];
             
             if(type === 'mistakes') {
-                document.getElementById('ai-result-title').innerText = lang === 'en' ? "Top 3 Common Mistakes" : "Top 3 Lỗi Sai Nhiều Nhất";
-                htmlContent += `<h3>${lang==='en' ? 'Knowledge Gap Analysis' : 'Phân tích Lỗ hổng Kiến thức'}</h3><ul>`;
+                document.getElementById('ai-result-title').innerText = lang === 'en' ? "Frequency of Mistakes" : "Tần Suất Lỗi Sai";
+                htmlContent += `<h3>${UI_TEXT[lang].reportTitleMistakes}</h3><ul>`;
                 top3Data.forEach(item => {
-                    let desc = ANALYSIS_DB[lang].mistakes[item.q] || "N/A";
-                    htmlContent += `<li style="margin-bottom:10px;">[${item.val} ${lang==='en'?'fails':'lỗi'}] ${desc}</li>`;
-                    promptQuestionsContext.push(item.q);
+                    let d = PEDAGOGY_DATA[lang].mistakes[item.q];
+                    if(d) {
+                        htmlContent += `<li><strong>${item.q} (${item.val} ${lang==='en'?'fails':'lỗi'})</strong>: ${d.qContent}<br>
+                                        <i>${lang==='en'?'Student Choice':'Học sinh chọn'}</i>: ${d.studentChoice}<br>
+                                        <i>${lang==='en'?'Knowledge Gap':'Lỗ hổng'}</i>: ${d.gap}<br>
+                                        <i>${lang==='en'?'Reason':'Lý do'}</i>: ${d.reason}<br>
+                                        <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
+                    }
                 });
                 htmlContent += "</ul>";
-            } 
-            else if (type === 'time') {
-                document.getElementById('ai-result-title').innerText = lang === 'en' ? "Top 3 Time-Consuming Tasks" : "Top 3 Câu Hỏi Tốn Thời Gian Nhất";
-                htmlContent += `<h3>${lang==='en' ? 'Time Allocation Analysis' : 'Phân tích Thời gian thực hiện'}</h3><ul>`;
+            } else if (type === 'time') {
+                document.getElementById('ai-result-title').innerText = lang === 'en' ? "Time Allocation per Question" : "Thời Gian Phân Bổ Từng Câu";
+                htmlContent += `<h3>${UI_TEXT[lang].reportTitleTime}</h3><ul>`;
                 top3Data.forEach(item => {
-                    let desc = ANALYSIS_DB[lang].time[item.q] || "N/A";
-                    htmlContent += `<li style="margin-bottom:10px;"><b>${item.q}</b> [Avg: ${item.val}s]: ${desc}</li>`;
-                    promptQuestionsContext.push(item.q);
+                    let d = PEDAGOGY_DATA[lang].time[item.q];
+                    if(d) {
+                        htmlContent += `<li><strong>${item.q} (Avg: ${item.val}s)</strong>: ${d.qContent}<br>
+                                        <i>${lang==='en'?'Difficulty':'Khó khăn'}</i>: ${d.gap}<br>
+                                        <i>${lang==='en'?'Reason for Time Lag':'Lý do tốn thời gian'}</i>: ${d.reason}<br>
+                                        <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
+                    }
                 });
                 htmlContent += "</ul>";
-            }
-            else if (type === 'attempts') {
-                document.getElementById('ai-result-title').innerText = lang === 'en' ? "Top 3 Most Attempts Tasks" : "Top 3 Câu Hỏi Thử & Sai Nhiều Nhất";
-                htmlContent += `<h3>${lang==='en' ? 'Attempt (Trial & Error) Analysis' : 'Phân tích Số lần thử (Attempts)'}</h3><ul>`;
+            } else if (type === 'attempts') {
+                document.getElementById('ai-result-title').innerText = lang === 'en' ? "Average Attempts per Question" : "Số Lần Thử Trung Bình Từng Câu";
+                htmlContent += `<h3>${UI_TEXT[lang].reportTitleAttempts}</h3><ul>`;
                 top3Data.forEach(item => {
-                    let desc = ANALYSIS_DB[lang].attempts[item.q] || "N/A";
-                    htmlContent += `<li style="margin-bottom:10px;"><b>${item.q}</b> [Avg attempts: ${item.val}]: ${desc}</li>`;
-                    promptQuestionsContext.push(item.q);
+                    let d = PEDAGOGY_DATA[lang].attempts[item.q];
+                    if(d) {
+                        htmlContent += `<li><strong>${item.q} (Avg attempts: ${item.val})</strong>: ${d.qContent}<br>
+                                        <i>${lang==='en'?'Difficulty':'Khó khăn'}</i>: ${d.gap}<br>
+                                        <i>${lang==='en'?'Reason for Trial & Error':'Lý do thử và sai'}</i>: ${d.reason}<br>
+                                        <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
+                    }
                 });
                 htmlContent += "</ul>";
             }
 
             document.getElementById('ai-output').innerHTML = htmlContent;
-            
-            // Xây dựng Prompt để sao chép
-            let contextStr = promptQuestionsContext.join(", ");
-            if (lang === 'en') {
-                currentPromptTemplate = `Act as an expert math Instructional Designer. Based on my class data, students struggled the most with questions ${contextStr} regarding Parabola properties. Using this context, provide me a 15-minute differentiated intervention activity to fix their misconceptions. Structure your response with a clear objective, steps, and required materials.`;
-            } else {
-                currentPromptTemplate = `Đóng vai một chuyên gia sư phạm Toán học. Dựa trên dữ liệu lớp học, học sinh của tôi gặp khó khăn lớn nhất ở các câu hỏi ${contextStr} liên quan đến chuyên đề Parabol. Dựa vào thông tin này, hãy thiết kế cho tôi một hoạt động can thiệp phân hóa (differentiated intervention) kéo dài 15 phút để sửa lỗi sai cho các em. Hãy trình bày rõ mục tiêu, các bước thực hiện và giáo cụ cần thiết.`;
-            }
-
             document.getElementById('ai-result-modal').style.display = 'block';
         }
 
-        function copyAIPrompt() {
-            navigator.clipboard.writeText(currentPromptTemplate).then(() => {
-                const lang = document.getElementById('app-language').value;
-                alert(lang === 'en' ? "Prompt copied to clipboard! Paste it into ChatGPT or Gemini." : "Đã sao chép Prompt! Hãy dán nó vào ChatGPT hoặc Gemini của bạn.");
+        // HÀM TẠO VÀ COPY PROMPT VỚI CẤU TRÚC MỚI THEO YÊU CẦU
+        window.copyPrompt = function(actionType) {
+            const lang = document.getElementById('app-language').value;
+            let contextDetails = "";
+
+            // Lắp ghép dữ liệu chi tiết của từng câu vào Prompt
+            currentTop3List.forEach(q => {
+                let d = PEDAGOGY_DATA[lang][currentAnalysisType][q];
+                if (d) {
+                    if (currentAnalysisType === 'mistakes') {
+                        contextDetails += `\n\n- ${lang==='en'?'Question':'Câu hỏi'}: ${d.qContent}\n- ${lang==='en'?'Incorrect choice':'Đáp án sai học sinh chọn'}: ${d.studentChoice}\n- ${lang==='en'?'Gap associated with this error':'Lỗi sai gắn với đáp án sai đó'}: ${d.gap}\n- ${lang==='en'?'Reason for this error':'Lý do học sinh mắc phải sai lầm này'}: ${d.reason}`;
+                    } else {
+                        contextDetails += `\n\n- ${lang==='en'?'Question':'Câu hỏi'}: ${d.qContent}\n- ${lang==='en'?'Gap/Difficulty':'Khó khăn/Lỗi sai về kỹ năng'}: ${d.gap}\n- ${lang==='en'?'Reason':'Lý do học sinh mắc phải sai lầm này'}: ${d.reason}`;
+                    }
+                }
+            });
+
+            // Xác định Action dựa trên nút bấm
+            let actionText = "";
+            if (actionType === 'deep_analysis') {
+                actionText = lang === 'en' 
+                    ? "provide a deeper analysis of the root causes of these errors from a cognitive psychology perspective and suggest intervention strategies." 
+                    : "phân tích sâu hơn về nguyên nhân gốc rễ của những lỗi sai này xét trên góc độ tâm lý học nhận thức và đề xuất hướng can thiệp.";
+            } else if (actionType === 'activity') {
+                actionText = lang === 'en' 
+                    ? "suggest 3 creative learning activities (games, group discussions, etc.) lasting 10-15 minutes to help students overcome these specific errors." 
+                    : "gợi ý 3 hoạt động học tập sáng tạo (trò chơi, thảo luận nhóm,...) kéo dài 10-15 phút để giúp học sinh khắc phục những lỗi sai này.";
+            } else if (actionType === 'exam') {
+                actionText = lang === 'en' 
+                    ? "propose 5 new assessment questions (with answers and explanations) specifically designed with pedagogical distractors to test these exact knowledge gaps." 
+                    : "đề xuất 5 câu hỏi kiểm tra đánh giá mới (kèm đáp án và giải thích) được thiết kế đặc biệt để gài bẫy và kiểm tra đúng vào những lỗ hổng kiến thức này.";
+            }
+
+            // Gắn vào khung Prompt tổng chuẩn mực
+            let finalPrompt = "";
+            if (lang === 'en') {
+                finalPrompt = `Act as an experienced high school math teacher and instructional designer. According to the data report, my students are frequently making the following errors in our review questions about parabolas: ${contextDetails}\n\nBased on this data, please ${actionText}`;
+            } else {
+                finalPrompt = `Đóng vai một giáo viên toán phổ thông có nhiều kinh nghiệm trong thiết kế giảng dạy. Theo báo cáo dữ liệu, học sinh của tôi thường mắc cái lỗi sai sau trong các câu hỏi ôn tập về parabol: ${contextDetails}\n\nTừ những dữ liệu trên, hãy ${actionText}`;
+            }
+
+            // Thực hiện lệnh Copy
+            navigator.clipboard.writeText(finalPrompt).then(() => {
+                alert(lang === 'en' ? "Prompt copied to clipboard! Paste it into your AI." : "Đã sao chép Prompt vào bộ nhớ tạm! Bạn có thể dán vào công cụ AI.");
             });
         }
 
         window.closeModal = function(id) { 
             document.getElementById(id).style.display = 'none'; 
+            if (currentChart) { currentChart.destroy(); currentChart = null; }
+            document.getElementById('chart-container').style.display = 'none';
         };
 
-        // ------------------------------------------------------------------
-        // 6. UTILITY FUNCTIONS (TABLE & SORTING)
-        // ------------------------------------------------------------------
-        window.setSort = function(col) { 
-            if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } 
-            renderTable(); 
-        };
-        
-        window.parseDuration = function(durStr) { 
-            if(!durStr || durStr === "N/A") return 0; 
-            let m = 0, s = 0; 
-            let matchM = durStr.match(/(\d+)m/); let matchS = durStr.match(/(\d+)s/); 
-            if(matchM) m = parseInt(matchM[1]); if(matchS) s = parseInt(matchS[1]); 
-            return m * 60 + s; 
-        };
-        
-        window.getStatusRank = function(status) { 
-            let s = (status || "").toLowerCase(); 
-            if (s.includes("victory")) return 4; 
-            if (s.includes("game over")) return 3; 
-            if (s.includes("playing")) return 2; return 1; 
-        };
-
-        window.deleteEntry = function(id) { 
-            const lang = document.getElementById('app-language').value;
-            let msg = lang === 'en' ? "Are you sure you want to delete this record?" : "Bạn có chắc chắn muốn xóa bản ghi này?";
-            if (confirm(msg)) db.ref('sessions/' + id).remove(); 
-        };
+        window.setSort = function(col) { if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderTable(); };
+        window.parseDuration = function(durStr) { if(!durStr || durStr === "N/A") return 0; let m = 0, s = 0; let matchM = durStr.match(/(\d+)m/); let matchS = durStr.match(/(\d+)s/); if(matchM) m = parseInt(matchM[1]); if(matchS) s = parseInt(matchS[1]); return m * 60 + s; };
+        window.getStatusRank = function(status) { let s = (status || "").toLowerCase(); if (s.includes("victory")) return 4; if (s.includes("game over")) return 3; if (s.includes("playing")) return 2; return 1; };
+        window.deleteEntry = function(id) { const lang = document.getElementById('app-language').value; let msg = lang === 'en' ? "Are you sure you want to delete this record?" : "Bạn có chắc chắn muốn xóa bản ghi này?"; if (confirm(msg)) db.ref('sessions/' + id).remove(); };
 
         window.renderTable = function() {
-            let fClass = document.getElementById("filter-class").value;
-            let fMode = document.getElementById("filter-mode").value;
-            const lang = document.getElementById('app-language').value;
-
+            let fClass = document.getElementById("filter-class").value; let fMode = document.getElementById("filter-mode").value; let fWrong = document.getElementById("filter-wrong").value; let fTopic = document.getElementById("filter-topic").value; const lang = document.getElementById('app-language').value;
             currentFilteredData = rawData.filter(row => {
-                if (fClass && row.class !== fClass) return false;
-                if (fMode && row.mode !== fMode) return false;
-                return true;
+                if (fClass && row.class !== fClass) return false; if (fMode && row.mode !== fMode) return false; if (fWrong && !(row.wrongAnswers || "").includes(fWrong)) return false; if (fTopic && !(row.reviewTopics || "").includes(fTopic)) return false; return true;
             });
 
-            if (sortCol) {
-                currentFilteredData.sort((a, b) => {
-                    let valA, valB;
-                    if (sortCol === 'name') { valA = (a.name || "").toLowerCase(); valB = (b.name || "").toLowerCase(); }
-                    else if (sortCol === 'progress') { valA = a.progress || 0; valB = b.progress || 0; }
-                    else if (sortCol === 'duration') { valA = parseDuration(a.duration); valB = parseDuration(b.duration); }
-                    else if (sortCol === 'status') { valA = getStatusRank(a.status); valB = getStatusRank(b.status); }
-                    if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0;
-                });
-            }
+            if (sortCol) { currentFilteredData.sort((a, b) => { let valA, valB; if (sortCol === 'name') { valA = (a.name || "").toLowerCase(); valB = (b.name || "").toLowerCase(); } else if (sortCol === 'progress') { valA = a.progress || 0; valB = b.progress || 0; } else if (sortCol === 'duration') { valA = parseDuration(a.duration); valB = parseDuration(b.duration); } else if (sortCol === 'status') { valA = getStatusRank(a.status); valB = getStatusRank(b.status); } if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0; }); }
 
             let statsText = lang === 'en' ? `Showing: ${currentFilteredData.length} groups.` : `Hiển thị: ${currentFilteredData.length} nhóm.`;
             document.getElementById("stats-container").innerText = statsText;
 
-            const tbody = document.getElementById('student-list');
-            tbody.innerHTML = "";
-            if (currentFilteredData.length === 0) { 
-                let msg = lang === 'en' ? "No data" : "Không có dữ liệu";
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">${msg}</td></tr>`; return; 
-            }
+            const tbody = document.getElementById('student-list'); tbody.innerHTML = "";
+            if (currentFilteredData.length === 0) { let msg = lang === 'en' ? "No data" : "Không có dữ liệu"; tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">${msg}</td></tr>`; return; }
 
             currentFilteredData.forEach(student => {
                 let statusClass = "status-none"; let sLow = (student.status || "").toLowerCase();
-                if (sLow === "playing" || sLow === "waiting") statusClass = "status-playing"; 
-                else if (sLow.includes("finished")) statusClass = "status-finished";
-
+                if (sLow === "playing" || sLow === "waiting") statusClass = "status-playing"; else if (sLow.includes("finished")) statusClass = "status-finished";
                 let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><b>${student.class || ""}</b></td>
-                    <td>${student.name || ""}</td>
-                    <td><b>${(student.mode || "practice").toUpperCase()}</b></td>
-                    <td class="${statusClass}">${(student.status || "").toUpperCase()}</td>
-                    <td><span class="progress-badge">${student.progress || 0} / 7</span></td>
-                    <td>${student.duration || "N/A"}</td>
-                    <td>${student.wrongAnswers || "None"}</td>
-                    <td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry('${student.firebaseId}')">🗑️</button></td>
-                `;
+                tr.innerHTML = `<td><b>${student.class || ""}</b></td><td>${student.name || ""}</td><td><b>${(student.mode || "practice").toUpperCase()}</b></td><td class="${statusClass}">${(student.status || "").toUpperCase()}</td><td><span class="progress-badge">${student.progress || 0} / 7</span></td><td>${student.duration || "N/A"}</td><td>${student.wrongAnswers || "None"}</td><td><small>${student.reviewTopics || "Perfect Run"}</small></td><td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry('${student.firebaseId}')">🗑️</button></td>`;
                 tbody.appendChild(tr);
             });
         };
-        
-        // Init Language
         changeLanguage();
     </script>
 </body>
