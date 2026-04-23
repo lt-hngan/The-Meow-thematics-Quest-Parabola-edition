@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Meow-thematics Quest: Parabola Edition - Teacher's Dashboard</title>
+    <title>Teacher Dashboard - Offline Analytics</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -26,7 +26,7 @@
             --table-bg: #1e1e1e;
             --table-hover: #2c2c2c;
             --table-border: #333;
-            --primary-color: #4da8da; /* Sáng hơn cho dark mode */
+            --primary-color: #4da8da; 
             --secondary-color: #b388ff;
             --input-bg: #333;
             --input-text: #e0e0e0;
@@ -46,22 +46,43 @@
         h1 { color: var(--primary-color); margin: 0; text-transform: uppercase; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); text-align: center;}
         .subtitle { color: var(--secondary-color); margin-top: 8px; font-size: 1.2rem; font-weight: bold; text-align: center;}
         
-        /* SETTINGS PANEL (TOP) */
+        /* --- LAYOUT BÊN TRÊN --- */
+        .top-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: stretch;
+            flex-wrap: wrap; /* Hỗ trợ rớt dòng nếu màn hình nhỏ */
+        }
+
+        .ai-panel { 
+            flex: 1; 
+            min-width: 60%;
+            background: var(--panel-bg); padding: 20px; border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 6px solid var(--secondary-color); 
+        }
+
         .settings-panel { 
-            background: var(--panel-bg); 
-            padding: 15px; border-radius: 8px; 
-            margin-bottom: 20px; 
-            display: flex; flex-wrap: wrap; gap: 15px; 
-            justify-content: center; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid var(--table-border);
+            width: 250px; flex-shrink: 0;
+            background: var(--panel-bg); padding: 20px; border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-right: 6px solid var(--primary-color);
+            display: flex; flex-direction: column; gap: 12px;
+            justify-content: flex-start;
         }
-        .setting-item { display: flex; align-items: center; gap: 5px; }
+
+        .setting-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; }
+        .setting-item > label { margin-right: 5px; flex-shrink: 0; }
         .setting-item select, .setting-item button { 
-            padding: 8px; border-radius: 5px; border: 1px solid #ccc; 
+            flex: 1; padding: 8px; border-radius: 5px; border: 1px solid var(--table-border); 
             background: var(--input-bg); color: var(--input-text);
-            font-weight: bold; cursor: pointer; font-size: 0.9em;
+            font-weight: bold; cursor: pointer; font-size: 0.9em; transition: 0.2s;
         }
-        .setting-item button:hover { opacity: 0.8; }
+        .setting-item button:hover, .setting-item select:hover { opacity: 0.8; border-color: var(--primary-color); }
+
+        /* Tiện ích để ẩn hiện cho layout ngang của ai-panel */
+        .ai-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--table-border); padding-bottom: 10px;}
+        .ai-btn { background: var(--secondary-color); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-right: 10px; margin-bottom: 10px; font-size: 1em; }
+        .ai-btn:hover { opacity: 0.8; }
 
         .stats-bar { text-align: center; background: var(--panel-bg); padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 1.1em; color: var(--text-color); font-weight: bold; border: 2px dashed #ccc; }
         
@@ -80,10 +101,6 @@
         .progress-badge { background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 0.9em; display: inline-block;}
         .delete-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; transition: 0.2s; opacity: 0.7; }
         .delete-btn:hover { transform: scale(1.3); opacity: 1; }
-
-        .ai-panel { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 6px solid var(--secondary-color); margin-bottom: 20px; }
-        .ai-btn { background: var(--secondary-color); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-right: 10px; margin-bottom: 10px; font-size: 1em; }
-        .ai-btn:hover { opacity: 0.8; }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9000; }
         .modal-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--modal-bg); color: var(--text-color); padding: 25px; border-radius: 10px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 6px solid var(--secondary-color);}
@@ -94,7 +111,7 @@
         .ai-output-content ul { padding-left: 20px; }
         .ai-output-content li { margin-bottom: 15px; }
         .ai-output-content strong { color: #c82333; }
-        body.dark-mode .ai-output-content strong { color: #ff6b6b; } /* Chỉnh màu chữ mạnh để dễ đọc trong dark mode */
+        body.dark-mode .ai-output-content strong { color: #ff6b6b; } 
         
         #chart-container { width: 100%; height: 300px; margin-bottom: 20px; display: none; }
         
@@ -110,8 +127,6 @@
         .btn-prompt-3 { background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.9em; }
         .btn-prompt-3:hover { opacity: 0.8; }
 
-        /* Tiện ích để ẩn hiện cho layout ngang */
-        .ai-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--table-border); padding-bottom: 10px;}
     </style>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script>
@@ -130,54 +145,62 @@
         <div class="subtitle">The Meow-thematics Quest: Parabola Edition</div>
     </div>
 
-    <div class="settings-panel">
-        <div class="setting-item">
-            <label for="app-language" style="font-weight:bold;">🌐</label>
-            <select id="app-language" onchange="changeLanguage()">
-                <option value="vi">Tiếng Việt</option>
-                <option value="en">English</option>
-            </select>
-        </div>
-        <div class="setting-item">
-            <label for="font-family-select" style="font-weight:bold;">T</label>
-            <select id="font-family-select" onchange="changeFontFamily()">
-                <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
-                <option value="'Times New Roman', Times, serif">Times New Roman</option>
-                <option value="Arial, Helvetica, sans-serif">Arial</option>
-                <option value="'Courier New', Courier, monospace">Courier New</option>
-            </select>
-        </div>
-        <div class="setting-item">
-            <button onclick="changeFontSize(1)" title="Increase Font Size">A+</button>
-            <button onclick="changeFontSize(-1)" title="Decrease Font Size">A-</button>
-        </div>
-        <div class="setting-item">
-            <button onclick="toggleDarkMode()" id="btn-dark-mode">🌙 Dark Mode</button>
-        </div>
-    </div>
+    <div class="top-section">
+        
+        <div class="ai-panel">
+            <div class="ai-panel-header">
+                <h2 id="ui-analytics-title" style="color: var(--secondary-color); margin: 0;">🧠 Pedagogical Analytics</h2>
+                
+                <div style="display: flex; align-items: center;">
+                    <label id="ui-select-class-label" style="font-weight: bold; margin-right: 10px;">Select Class:</label>
+                    <select id="ai-target-class" style="padding: 6px; border-radius: 5px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--table-border);">
+                        <option value="ALL">All Classes</option>
+                        <option value="10A">Class 10A</option>
+                        <option value="10B">Class 10B</option>
+                    </select>
+                </div>
+            </div>
 
-    <div class="ai-panel">
-        <div class="ai-panel-header">
-            <h2 id="ui-analytics-title" style="color: var(--secondary-color); margin: 0;">🧠 Pedagogical Analytics</h2>
-            
-            <div style="display: flex; align-items: center;">
-                <label id="ui-select-class-label" style="font-weight: bold; margin-right: 10px;">Select Class:</label>
-                <select id="ai-target-class" style="padding: 6px; border-radius: 5px; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--table-border);">
-                    <option value="ALL">All Classes</option>
-                    <option value="10A">Class 10A</option>
-                    <option value="10B">Class 10B</option>
-                </select>
+            <div style="text-align: center;">
+                <button class="ai-btn" id="btn-top-mistakes" onclick="generateReport('mistakes')">Common Mistakes Analysis</button>
+                <button class="ai-btn" id="btn-top-time" onclick="generateReport('time')">Time Allocation Analysis</button>
+                <button class="ai-btn" id="btn-top-attempts" onclick="generateReport('attempts')">Attempts Analysis</button>
             </div>
         </div>
 
-        <div style="text-align: center;">
-            <button class="ai-btn" id="btn-top-mistakes" onclick="generateReport('mistakes')">Common Mistakes Analysis</button>
-            <button class="ai-btn" id="btn-top-time" onclick="generateReport('time')">Time Allocation Analysis</button>
-            <button class="ai-btn" id="btn-top-attempts" onclick="generateReport('attempts')">Attempts Analysis</button>
+        <div class="settings-panel">
+            <h3 id="ui-settings-title" style="margin-top: 0; margin-bottom: 5px; color: var(--primary-color); font-size: 1.1em;">⚙️ Settings</h3>
+            
+            <div class="setting-item">
+                <label for="app-language" style="font-weight:bold;">🌐</label>
+                <select id="app-language" onchange="changeLanguage()">
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            
+            <div class="setting-item">
+                <label for="font-family-select" style="font-weight:bold; font-size:1.1em;">T</label>
+                <select id="font-family-select" onchange="changeFontFamily()">
+                    <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">Trebuchet MS</option>
+                </select>
+            </div>
+            
+            <div class="setting-item" style="justify-content: center; gap: 10px;">
+                <button onclick="changeFontSize(1)" title="Increase Font Size">A+</button>
+                <button onclick="changeFontSize(-1)" title="Decrease Font Size">A-</button>
+            </div>
+            
+            <div class="setting-item">
+                <button onclick="toggleDarkMode()" id="btn-dark-mode" style="width: 100%;">🌙 Dark Mode</button>
+            </div>
         </div>
-    </div>
 
-    <div id="stats-container" class="stats-bar">Waiting for data...</div>
+    </div> <div id="stats-container" class="stats-bar">Waiting for data...</div>
     
     <table id="dashboard-table">
         <thead>
@@ -242,7 +265,6 @@
         let currentFontSize = 16;
         function changeFontSize(step) {
             currentFontSize += step * 2;
-            // Giới hạn trong khoảng 12px đến 24px
             if (currentFontSize < 12) currentFontSize = 12;
             if (currentFontSize > 24) currentFontSize = 24;
             document.body.style.fontSize = currentFontSize + 'px';
@@ -261,14 +283,12 @@
             } else {
                 btn.innerText = "🌙 Dark Mode";
             }
-            // Vẽ lại chart nếu đang mở để màu chữ cập nhật (nếu cần thiết, ChartJS yêu cầu update settings)
             if(document.getElementById('ai-result-modal').style.display === 'block') {
                 Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#666';
                 if(currentChart) currentChart.update();
             }
         }
 
-        // Đặt màu mặc định cho Chart.js
         Chart.defaults.color = '#666';
 
 
@@ -356,14 +376,14 @@
 
         const UI_TEXT = {
             en: {
-                title: "🎮 STUDENTS' RESULTS DASHBOARD 🎮", analyticsTitle: "🧠 Pedagogical Analytics", selectClass: "Select Class to Analyze:",
+                title: "🎮 STUDENTS' RESULTS DASHBOARD 🎮", analyticsTitle: "🧠 Pedagogical Analytics", selectClass: "Select Class to Analyze:", settingsTitle: "⚙️ Settings",
                 btnMistakes: "Common Mistakes Analysis", btnTime: "Time Allocation Analysis", btnAttempts: "Attempts Analysis",
                 colClass: "Class", colMembers: "Group Members", colMode: "Mode", colStatus: "Status", colProgress: "Progress", colDuration: "Duration", colWrong: "Wrong Answers", colTopics: "Review Topics", colAction: "Action",
                 promptTitle: "AI Prompt Options:", btnPrompt1: "Copy prompt AI for deep analysis", btnPrompt2: "Copy prompt AI for activity suggestions", btnPrompt3: "Copy prompt AI for exam recommendations",
                 reportTitleMistakes: "Common Mistakes Analysis", reportTitleTime: "Time Allocation Analysis", reportTitleAttempts: "Attempt Analysis"
             },
             vi: {
-                title: "🎮 BẢNG THEO DÕI KẾT QUẢ CỦA HỌC SINH 🎮", analyticsTitle: "🧠 Phân Tích Sư Phạm", selectClass: "Chọn Lớp Cần Phân Tích:",
+                title: "🎮 BẢNG THEO DÕI KẾT QUẢ CỦA HỌC SINH 🎮", analyticsTitle: "🧠 Phân Tích Sư Phạm", selectClass: "Chọn Lớp Cần Phân Tích:", settingsTitle: "⚙️ Cài Đặt",
                 btnMistakes: "Phân tích lỗi sai phổ biến", btnTime: "Phân tích thời gian làm bài", btnAttempts: "Phân tích số lần thử và sai",
                 colClass: "Lớp", colMembers: "Thành Viên", colMode: "Chế Độ", colStatus: "Trạng Thái", colProgress: "Tiến Độ", colDuration: "Thời Gian", colWrong: "Câu Sai", colTopics: "Chủ Đề Ôn Tập", colAction: "Hành Động",
                 promptTitle: "Các Lựa Chọn Câu Lệnh AI (nhấn để sao chép):", btnPrompt1: "Sao chép lệnh AI giúp phân tích sâu hơn", btnPrompt2: "Sao chép lệnh AI giúp gợi ý hoạt động học tập", btnPrompt3: "Sao chép lệnh AI giúp đề xuất nội dung kiểm tra",
@@ -422,6 +442,7 @@
             const lang = document.getElementById('app-language').value;
             document.getElementById('ui-title').innerText = UI_TEXT[lang].title;
             document.getElementById('ui-analytics-title').innerText = UI_TEXT[lang].analyticsTitle;
+            document.getElementById('ui-settings-title').innerText = UI_TEXT[lang].settingsTitle;
             document.getElementById('ui-select-class-label').innerText = UI_TEXT[lang].selectClass;
             document.getElementById('btn-top-mistakes').innerText = UI_TEXT[lang].btnMistakes;
             document.getElementById('btn-top-time').innerText = UI_TEXT[lang].btnTime;
@@ -727,8 +748,7 @@
                                 <td><span class="progress-badge">${student.progress || 0} / 7</span></td>
                                 <td>${student.duration || "N/A"}</td>
                                 <td>${displayWrong}</td>
-                                <td><small>${displayTopics}</small></td>
-                                <td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry('${student.firebaseId}')">🗑️</button></td>`;
+                                <td>${displayTopics}</td> <td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry('${student.firebaseId}')">🗑️</button></td>`;
                 tbody.appendChild(tr);
             });
         };
