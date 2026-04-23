@@ -22,7 +22,8 @@
         .status-playing { color: #ff8a00; font-weight: bold; }
         .status-finished { color: #28a745; font-weight: bold; }
         .status-none { color: #dc3545; font-weight: bold; }
-        .progress-badge { background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 14px; }
+        /* Tăng độ rộng cột progress tại th ở table HTML bên dưới */
+        .progress-badge { background: #007bff; color: white; padding: 6px 12px; border-radius: 12px; font-weight: bold; font-size: 15px; display: inline-block;}
         .delete-btn { background: none; border: none; cursor: pointer; font-size: 20px; transition: 0.2s; opacity: 0.7; }
         .delete-btn:hover { transform: scale(1.3); opacity: 1; }
 
@@ -54,7 +55,15 @@
         .btn-prompt-3 { background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-prompt-3:hover { background-color: #218838; }
     </style>
+    
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -97,7 +106,7 @@
                 <th class="sortable" onclick="setSort('name')"><span id="ui-col-members">Group Members</span> ↕</th>
                 <th><span id="ui-col-mode">Mode</span><select id="filter-mode" class="filter-select" onchange="renderTable()"><option value="">All</option><option value="practice">Practice</option><option value="combat">Combat</option></select></th>
                 <th class="sortable" onclick="setSort('status')"><span id="ui-col-status">Status</span> ↕</th>
-                <th class="sortable" onclick="setSort('progress')"><span id="ui-col-progress">Progress</span> ↕</th>
+                <th class="sortable" style="width: 15%; min-width: 140px;" onclick="setSort('progress')"><span id="ui-col-progress">Progress</span> ↕</th>
                 <th class="sortable" onclick="setSort('duration')"><span id="ui-col-duration">Duration</span> ↕</th>
                 <th><span id="ui-col-wrong">Wrong Answers</span>
                     <select id="filter-wrong" class="filter-select" onchange="renderTable()">
@@ -138,39 +147,39 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
         // ------------------------------------------------------------------
-        // 1. DATA CẤU TRÚC MỚI THEO YÊU CẦU CỦA BẠN (CẬP NHẬT MISTAKES -> TOPICS)
+        // CẬP NHẬT KỊCH BẢN VÀ BỔ SUNG TRƯỜNG "title" CHO TIẾNG VIỆT
         // ------------------------------------------------------------------
         const PEDAGOGY_DATA = {
             vi: {
                 mistakes: {
-                    "Concavity": { gap: 'Không xác định đúng hướng bề lõm (quay lên hay quay xuống) dựa vào hệ số $a$.', reason: 'Học sinh học vẹt quy tắc chữ ("a dương thì quay lên") nhưng thiếu liên kết hình ảnh trực quan (visual mapping) trong não bộ. Dẫn đến khi chịu áp lực thời gian, các em dễ bị nhầm lẫn phương hướng hoặc bị nhiễu bởi các hệ số $b, c$.', advice: 'Áp dụng phương pháp ghi nhớ hình ảnh "Mặt cười / Mặt mếu". Hệ số $a > 0$ (tích cực/vui vẻ) $\\rightarrow$ đồ thị là miệng cười (lõm lên). Hệ số $a < 0$ (tiêu cực/buồn bã) $\\rightarrow$ đồ thị là miệng mếu (lõm xuống). Cho học sinh thực hành vẽ biểu tượng mặt cười/mếu ngay bên cạnh hàm số đề bài.' },
-                    "Formula for the x-coordinate of the vertex": { gap: 'Bỏ quên dấu âm ($-$) trong công thức $x = -\\frac{b}{2a}$.', reason: 'Sự quá tải nhận thức (cognitive overload) đối với các công thức có phân số. Học sinh cũng thường xuyên nhầm lẫn công thức này với định lý Vi-ét của phương trình bậc 2 ($x_1 + x_2 = -\\frac{b}{a}$).', advice: 'Biến công thức thành một "khẩu quyết" có nhịp điệu (ví dụ: "trừ bê trên hai a"). Yêu cầu học sinh tạo thói quen viết lại công thức gốc ra góc nháp trước khi bắt đầu thay số.' },
-                    "Formula for the y-coordinate of the vertex": { gap: 'Bỏ quên dấu âm ($-$) trong công thức $y = -\\frac{\\Delta}{4a}$.', reason: 'Biểu thức $\\Delta$ vốn đã phức tạp ($b^2 - 4ac$). Khi não bộ tập trung vào việc xử lý một thành phần khó, nó có xu hướng tự động "cắt bỏ" các chi tiết nhỏ lẻ (như dấu trừ phía trước) để giảm tải.', advice: 'Nhấn mạnh quy luật hình thức: "Tọa độ đỉnh $I$ của Parabol rất đồng bộ, cả x và y đều phải có dấu trừ ở phía trước phân số".' },
-                    "Equation format of the axis of symmetry": { gap: 'Chọn phương trình đường thẳng nằm ngang ($y = ...$) thay vì đường thẳng đứng ($x = ...$).', reason: 'Mất gốc về khái niệm phương trình đường thẳng trên hệ trục tọa độ $Oxy$. Học sinh chỉ chăm chăm đi tính "con số" $-\\frac{b}{2a}$ mà quên mất bản chất hình học của trục đối xứng là một đường thẳng đứng song song với trục $Oy$.', advice: 'Trực quan hóa hình học: Vẽ một trục $Ox$, kẻ một đường thẳng đứng cắt ngang qua trục $Ox$. Nhấn mạnh với học sinh: "Đường thẳng này cắt trục $Ox$ tại một điểm, do đó tên của nó phải bắt đầu bằng x =".' },
-                    "Calculating the axis of symmetry": { gap: 'Tính toán sai giá trị số của biểu thức $-\\frac{b}{2a}$.', reason: 'Kỹ năng xử lý số nguyên yếu, đặc biệt là lỗi "triệt tiêu dấu âm". Khi $b$ và $a$ đều là số âm, việc có tới 3 dấu trừ trong một phân số khiến các em bị rối.', advice: 'Dạy quy tắc "Đếm dấu trừ": Nếu phép tính có số lẻ dấu trừ (1 hoặc 3 dấu), kết quả chắc chắn mang dấu âm. Yêu cầu học sinh viết tường minh biểu thức thay số (VD: $-\\frac{-16}{2(-4)}$) trước khi bấm máy.' },
-                    "Calculating the x-coordinate of the vertex": { gap: 'Tính sai giá trị $x_I$.', reason: 'Giống với lỗi tính toán trục đối xứng (sai dấu khi thay số).', advice: 'Hướng dẫn sử dụng tính năng giải phương trình bậc hai trên máy tính cầm tay (Casio/Vinacal). Máy tính sẽ tự động cung cấp $x$-Value Minimum/Maximum ở cuối. Đây là công cụ đối chiếu kết quả tuyệt vời để học sinh tự sửa sai.' },
-                    "Calculating the y-coordinate of the vertex": { gap: 'Thay $x_I$ vào hàm số ban đầu nhưng tính sai ra $y_I$.', reason: 'Lỗi cú pháp kinh điển: Không đóng ngoặc đơn khi bình phương một số âm (tính $-2 \\cdot -2^2$ thay vì tính $-2(-2)^2$).', advice: 'Cung cấp "cứu cánh" bằng máy tính: Nhập nguyên biểu thức hàm số chứa biến $x$ vào máy tính $\\rightarrow$ Bấm phím CALC $\\rightarrow$ Nhập giá trị $x$ vừa tìm được. Cách này triệt tiêu hoàn toàn lỗi thiếu ngoặc đơn của học sinh.' },
-                    "Increasing/decreasing intervals": { gap: 'Không liên kết được tọa độ đỉnh với sự phân chia khoảng trên trục số.', reason: 'Học sinh cố gắng suy luận bằng đại số hoặc học vẹt lý thuyết dài dòng, dẫn đến không biết ranh giới của các khoảng (điểm quay đầu) nằm ở đâu.', advice: 'Bắt buộc học sinh sử dụng "Bảng biến thiên" (Table of Variation) như một công cụ đồ họa trung gian. Khắc sâu: "Khoảng đồng/nghịch biến luôn nhìn ở dòng của $x$, không nhìn ở dòng của $y$".' },
-                    "Identifying Maximum vs. Minimum based on concavity": { gap: 'Chọn Min khi $a < 0$ hoặc ngược lại.', reason: 'Trực giác sai lầm: Các em thường nghĩ $a$ là số âm (tượng trưng cho sự nhỏ bé) thì hàm số sẽ có "Giá trị nhỏ nhất" (Min).', advice: 'Dùng hình ảnh so sánh thực tế: Hình $a < 0$ (mặt úp) giống như một "Ngọn núi" $\\rightarrow$ Núi thì phải có Đỉnh cao nhất (Max). Hình $a > 0$ (mặt ngửa) giống như một "Thung lũng" $\\rightarrow$ Thung lũng thì phải có Đáy thấp nhất (Min).' },
-                    "Calculating the Maximum/Minimum value": { gap: 'Chọn đáp án là hoành độ $x$ thay vì tung độ $y$.', reason: 'Vội vàng. Giải quyết xong bước 1 (tìm $x$), học sinh thấy con số đó xuất hiện trong các đáp án (VD: Tính ra $x=2$, thấy đáp án ghi "Max=2") là vội vàng khoanh ngay mà quên mất khái niệm "Giá trị" của hàm số.', advice: 'Đưa ra quy ước đọc đề: Hễ thấy từ "Giá trị lớn nhất / Giá trị nhỏ nhất" trong đề bài, học sinh phải dùng bút gạch chân chữ "Giá trị" và ghi chữ $y = ?$ ngay bên cạnh để não bộ thiết lập mục tiêu tìm kiếm chính xác.' }
+                    "Concavity": { title: "Bề lõm của đồ thị", gap: 'Không xác định đúng hướng bề lõm (quay lên hay quay xuống) dựa vào hệ số $a$.', reason: 'Học sinh học vẹt quy tắc chữ ("a dương thì quay lên") nhưng thiếu liên kết hình ảnh trực quan (visual mapping) trong não bộ. Dẫn đến khi chịu áp lực thời gian, các em dễ bị nhầm lẫn phương hướng hoặc bị nhiễu bởi các hệ số $b, c$.', advice: 'Áp dụng phương pháp ghi nhớ hình ảnh "Mặt cười / Mặt mếu". Hệ số $a > 0$ (tích cực/vui vẻ) $\\rightarrow$ đồ thị là miệng cười (lõm lên). Hệ số $a < 0$ (tiêu cực/buồn bã) $\\rightarrow$ đồ thị là miệng mếu (lõm xuống). Cho học sinh thực hành vẽ biểu tượng mặt cười/mếu ngay bên cạnh hàm số đề bài.' },
+                    "Formula for the x-coordinate of the vertex": { title: "Công thức hoành độ đỉnh", gap: 'Bỏ quên dấu âm ($-$) trong công thức $x = -\\frac{b}{2a}$.', reason: 'Sự quá tải nhận thức (cognitive overload) đối với các công thức có phân số. Học sinh cũng thường xuyên nhầm lẫn công thức này với định lý Vi-ét của phương trình bậc 2 ($x_1 + x_2 = -\\frac{b}{a}$).', advice: 'Biến công thức thành một "khẩu quyết" có nhịp điệu (ví dụ: "trừ bê trên hai a"). Yêu cầu học sinh tạo thói quen viết lại công thức gốc ra góc nháp trước khi bắt đầu thay số.' },
+                    "Formula for the y-coordinate of the vertex": { title: "Công thức tung độ đỉnh", gap: 'Bỏ quên dấu âm ($-$) trong công thức $y = -\\frac{\\Delta}{4a}$.', reason: 'Biểu thức $\\Delta$ vốn đã phức tạp ($b^2 - 4ac$). Khi não bộ tập trung vào việc xử lý một thành phần khó, nó có xu hướng tự động "cắt bỏ" các chi tiết nhỏ lẻ (như dấu trừ phía trước) để giảm tải.', advice: 'Nhấn mạnh quy luật hình thức: "Tọa độ đỉnh $I$ của Parabol rất đồng bộ, cả x và y đều phải có dấu trừ ở phía trước phân số".' },
+                    "Equation format of the axis of symmetry": { title: "Định dạng phương trình trục đối xứng", gap: 'Chọn phương trình đường thẳng nằm ngang ($y = ...$) thay vì đường thẳng đứng ($x = ...$).', reason: 'Mất gốc về khái niệm phương trình đường thẳng trên hệ trục tọa độ $Oxy$. Học sinh chỉ chăm chăm đi tính "con số" $-\\frac{b}{2a}$ mà quên mất bản chất hình học của trục đối xứng là một đường thẳng đứng song song với trục $Oy$.', advice: 'Trực quan hóa hình học: Vẽ một trục $Ox$, kẻ một đường thẳng đứng cắt ngang qua trục $Ox$. Nhấn mạnh với học sinh: "Đường thẳng này cắt trục $Ox$ tại một điểm, do đó tên của nó phải bắt đầu bằng x =".' },
+                    "Calculating the axis of symmetry": { title: "Tính toán trục đối xứng", gap: 'Tính toán sai giá trị số của biểu thức $-\\frac{b}{2a}$.', reason: 'Kỹ năng xử lý số nguyên yếu, đặc biệt là lỗi "triệt tiêu dấu âm". Khi $b$ và $a$ đều là số âm, việc có tới 3 dấu trừ trong một phân số khiến các em bị rối.', advice: 'Dạy quy tắc "Đếm dấu trừ": Nếu phép tính có số lẻ dấu trừ (1 hoặc 3 dấu), kết quả chắc chắn mang dấu âm. Yêu cầu học sinh viết tường minh biểu thức thay số (VD: $-\\frac{-16}{2(-4)}$) trước khi bấm máy.' },
+                    "Calculating the x-coordinate of the vertex": { title: "Tính toán hoành độ đỉnh", gap: 'Tính sai giá trị $x_I$.', reason: 'Giống với lỗi tính toán trục đối xứng (sai dấu khi thay số).', advice: 'Hướng dẫn sử dụng tính năng giải phương trình bậc hai trên máy tính cầm tay (Casio/Vinacal). Máy tính sẽ tự động cung cấp $x$-Value Minimum/Maximum ở cuối. Đây là công cụ đối chiếu kết quả tuyệt vời để học sinh tự sửa sai.' },
+                    "Calculating the y-coordinate of the vertex": { title: "Tính toán tung độ đỉnh", gap: 'Thay $x_I$ vào hàm số ban đầu nhưng tính sai ra $y_I$.', reason: 'Lỗi cú pháp kinh điển: Không đóng ngoặc đơn khi bình phương một số âm (tính $-2 \\cdot -2^2$ thay vì tính $-2(-2)^2$).', advice: 'Cung cấp "cứu cánh" bằng máy tính: Nhập nguyên biểu thức hàm số chứa biến $x$ vào máy tính $\\rightarrow$ Bấm phím CALC $\\rightarrow$ Nhập giá trị $x$ vừa tìm được. Cách này triệt tiêu hoàn toàn lỗi thiếu ngoặc đơn của học sinh.' },
+                    "Increasing/decreasing intervals": { title: "Khoảng đồng biến/nghịch biến", gap: 'Không liên kết được tọa độ đỉnh với sự phân chia khoảng trên trục số.', reason: 'Học sinh cố gắng suy luận bằng đại số hoặc học vẹt lý thuyết dài dòng, dẫn đến không biết ranh giới của các khoảng (điểm quay đầu) nằm ở đâu.', advice: 'Bắt buộc học sinh sử dụng "Bảng biến thiên" (Table of Variation) như một công cụ đồ họa trung gian. Khắc sâu: "Khoảng đồng/nghịch biến luôn nhìn ở dòng của $x$, không nhìn ở dòng của $y$".' },
+                    "Identifying Maximum vs. Minimum based on concavity": { title: "Nhận diện Max/Min dựa vào bề lõm", gap: 'Chọn Min khi $a < 0$ hoặc ngược lại.', reason: 'Trực giác sai lầm: Các em thường nghĩ $a$ là số âm (tượng trưng cho sự nhỏ bé) thì hàm số sẽ có "Giá trị nhỏ nhất" (Min).', advice: 'Dùng hình ảnh so sánh thực tế: Hình $a < 0$ (mặt úp) giống như một "Ngọn núi" $\\rightarrow$ Núi thì phải có Đỉnh cao nhất (Max). Hình $a > 0$ (mặt ngửa) giống như một "Thung lũng" $\\rightarrow$ Thung lũng thì phải có Đáy thấp nhất (Min).' },
+                    "Calculating the Maximum/Minimum value": { title: "Tính giá trị Max/Min", gap: 'Chọn đáp án là hoành độ $x$ thay vì tung độ $y$.', reason: 'Vội vàng. Giải quyết xong bước 1 (tìm $x$), học sinh thấy con số đó xuất hiện trong các đáp án (VD: Tính ra $x=2$, thấy đáp án ghi "Max=2") là vội vàng khoanh ngay mà quên mất khái niệm "Giá trị" của hàm số.', advice: 'Đưa ra quy ước đọc đề: Hễ thấy từ "Giá trị lớn nhất / Giá trị nhỏ nhất" trong đề bài, học sinh phải dùng bút gạch chân chữ "Giá trị" và ghi chữ $y = ?$ ngay bên cạnh để não bộ thiết lập mục tiêu tìm kiếm chính xác.' }
                 },
                 time: {
-                    "Q1": { qContent: 'Xác định tính đúng/sai của phát biểu "Bề lõm quay xuống" cho hàm $y = -3x^2 + 5x - 2$.', gap: 'Phản xạ liên kết giữa dấu hệ số $a$ và hình dáng đồ thị.', reason: 'Học sinh thường phải dừng lại để nhớ lại quy ước (âm là lên hay xuống) thay vì có phản xạ hình ảnh tức thời.', advice: 'Dạy học sinh mẹo "Mặt cười/Mặt mếu" ($a < 0$ $\\to$ quay xuống). Ghi chú dấu của $a$ ngay lập tức khi đọc đề.' },
-                    "Q2": { qContent: 'Chọn công thức tổng quát đúng cho tọa độ đỉnh $I$.', gap: 'Các đáp án gây nhiễu có hình thức rất giống nhau.', reason: 'Hiện tượng "loạn thị giác". Học sinh phải nhìn đi nhìn lại các phương án để so sánh từng dấu cộng/trừ.', advice: 'Yêu cầu tự viết công thức ra nháp trước khi nhìn vào các lựa chọn. Đối chiếu kết quả mình đã viết sẽ nhanh hơn.' },
-                    "Q3": { qContent: 'Tìm phương trình trục đối xứng của $y = -4x^2 - 16x + 3$.', gap: 'Phân biệt định dạng $x = ...$ và $y = ...$, xử lý dấu tính toán.', reason: 'Học sinh tốn thời gian tính nhẩm $-\\frac{b}{2a}$ với nhiều dấu âm và phân vân giữa việc chọn $x$ hay $y$.', advice: 'Nhấn mạnh "Trục đối xứng là đường thẳng đứng, luôn bắt đầu bằng $x=$". Dạy cách đếm dấu trừ.' },
-                    "Q4": { qContent: 'Tìm tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', gap: 'Kỹ năng thay số và tính toán.', reason: 'Sai lầm trong tính toán thủ công (bình phương số âm). Khi tính sai, học sinh phải làm lại từ đầu.', advice: 'Hướng dẫn sử dụng phím CALC trên máy tính hoặc chức năng tìm Max/Min trong mode giải phương trình.' },
-                    "Q5": { qContent: 'Điền số vào khoảng đồng biến $(..., +\\infty)$ của $y = x^2 - 4x + 3$.', gap: 'Chuyển đổi từ công thức sang sự biến thiên trên trục số.', reason: 'Ghi nhớ máy móc "đồng biến khi $a > 0$ và $x > ...$" thay vì sử dụng hình ảnh. Não bộ xử lý chậm logic chữ.', advice: 'Luôn yêu cầu vẽ nhanh một bảng biến thiên sơ lược. Hình ảnh đồ thị sẽ giúp xác định khoảng nhanh hơn.' },
-                    "Q6": { qContent: 'Xác định hàm $y = -x^2 + 4x - 3$ có Max hay Min và giá trị đó là bao nhiêu.', gap: 'Quy trình 2 bước: 1. Xét $a$; 2. Tính $y_I$.', reason: 'Nhầm lẫn giữa "giá trị đạt được tại $x$" và "giá trị của hàm số $y$". Tính ra $x$ rồi dừng lại suy nghĩ.', advice: 'Dùng hình ảnh "Đỉnh núi" (Max) và "Thung lũng" (Min). Khắc sâu: "Giá trị" luôn là $y$.' },
-                    "Q7": { qContent: 'Kiểm tra tính đúng đắn của 4 mệnh đề về tính chất của $y = 2x^2 - 8x + 6$.', gap: 'Lượng kiến thức phải kiểm tra quá lớn.', reason: 'Đây là "hố đen thời gian". Học sinh kiểm tra từng đáp án A, B, C một cách tuần tự.', advice: 'Dạy chiến thuật "Phác thảo đồ thị nhanh" (Quick Sketch). Kiểm chứng cả 4 mệnh đề cùng lúc bằng mắt thường.' }
+                    "Q1": { qContent: 'Xác định tính đúng/sai của phát biểu "Bề lõm quay xuống" cho hàm $y = -3x^2 + 5x - 2$.', gap: 'Phản xạ liên kết giữa dấu hệ số $a$ và hình dáng đồ thị.', reason: 'Học sinh thường phải dừng lại để nhớ lại quy ước (âm là lên hay xuống) thay vì có một phản xạ hình ảnh tức thời.', advice: 'Dạy học sinh mẹo "Mặt cười/Mặt mếu" ($a < 0$ là mặt mếu $\\rightarrow$ quay xuống). Yêu cầu học sinh ghi chú dấu của $a$ ngay lập tức khi đọc đề.' },
+                    "Q2": { qContent: 'Chọn công thức tổng quát đúng cho tọa độ đỉnh $I$.', gap: 'Các đáp án gây nhiễu (distractors) có hình thức rất giống nhau về dấu và vị trí các đại số.', reason: 'Hiện tượng "loạn thị giác". Học sinh phải nhìn đi nhìn lại các phương án A, B, C, D để so sánh từng dấu cộng/trừ nhỏ xíu, dẫn đến việc đọc đi đọc lại nhiều lần.', advice: 'Yêu cầu học sinh tự viết công thức ra nháp trước khi nhìn vào các lựa chọn. Việc đối chiếu kết quả mình đã viết với đáp án sẽ nhanh hơn nhiều so với việc phân tích 4 đáp án gây nhiễu.' },
+                    "Q3": { qContent: 'Tìm phương trình trục đối xứng của $y = -4x^2 - 16x + 3$.', gap: 'Phân biệt định dạng phương trình $x = ...$ và $y = ...$, đồng thời xử lý dấu khi tính toán.', reason: 'Học sinh tốn thời gian tính nhẩm $-\\frac{b}{2a}$ với nhiều dấu âm $(-16, -4)$ và phân vân giữa việc chọn $x$ hay $y$.', advice: 'Nhấn mạnh "Trục đối xứng là đường thẳng đứng, luôn bắt đầu bằng $x=$". Dạy học sinh cách đếm số dấu trừ: 3 dấu trừ trong biểu thức $-\\frac{-16}{2(-4)}$ chắc chắn kết quả phải âm.' },
+                    "Q4": { qContent: 'Tìm tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', gap: 'Kỹ năng thay số và tính toán giá trị của hàm số tại một điểm.', reason: 'Sai lầm trong tính toán thủ công (đặc biệt là bình phương số âm). Khi tính sai, học sinh phải làm lại từ đầu hoặc hoang mang vì kết quả không có trong tùy chọn.', advice: 'Hướng dẫn học sinh sử dụng phím CALC trên máy tính sau khi tìm được $x$. Hoặc dùng chức năng tìm Max/Min trong mode giải phương trình bậc hai để kiểm tra kết quả tức thì.' },
+                    "Q5": { qContent: 'Điền khoảng đồng biến $(..., +\\infty)$ của $y = x^2 - 4x + 3$.', gap: 'Chuyển đổi từ công thức sang sự biến thiên trên trục số.', reason: 'Học sinh cố gắng ghi nhớ máy móc "đồng biến khi $a > 0$ và $x > ...$" thay vì sử dụng hình ảnh. Việc phải nhớ quá nhiều điều kiện logic khiến não bộ xử lý chậm.', advice: 'Luôn yêu cầu học sinh vẽ nhanh một bảng biến thiên sơ lược hoặc một đường cong phác thảo. Hình ảnh đồ thị đi lên/xuống sẽ giúp xác định khoảng nhanh hơn mọi công thức chữ.' },
+                    "Q6": { qContent: 'Xác định hàm $y = -x^2 + 4x - 3$ có Max hay Min và giá trị đó là bao nhiêu.', gap: 'Quy trình 2 bước: 1. Xét $a$ để biết loại giá trị; 2. Tính $y_I$.', reason: 'Nhầm lẫn giữa "giá trị đạt được tại $x$" và "giá trị của hàm số $y$". Học sinh thường tính ra $x$ rồi dừng lại suy nghĩ xem đó có phải là đáp án không.', advice: 'Dùng hình ảnh "Đỉnh núi" (Max) và "Thung lũng" (Min). Khắc sâu: "Giá trị" (Value) luôn là $y$.' },
+                    "Q7": { qContent: 'Kiểm tra tính đúng đắn của 4 mệnh đề về tính chất của $y = 2x^2 - 8x + 6$.', gap: 'Lượng kiến thức phải kiểm tra quá lớn trong một câu hỏi duy nhất.', reason: 'Đây là "hố đen thời gian". Học sinh thường đi kiểm tra từng đáp án A, B, C một cách tuần tự. Nếu đáp án sai nằm ở D, các em đã tốn gấp 3-4 lần thời gian so với các câu khác.', advice: 'Dạy chiến thuật "Phác thảo đồ thị nhanh" (Quick Sketch). Chỉ cần vẽ hình dáng và tọa độ đỉnh, học sinh có thể kiểm chứng cả 4 mệnh đề cùng một lúc bằng mắt thường thay vì tính toán rời rạc.' }
                 },
-                attempts: { // Sẽ lấy dữ liệu trực tiếp từ các hàm
-                    "Q1": { qContent: 'Xác định "Bề lõm quay xuống" cho hàm $y = -3x^2 + 5x - 2$.', gap: 'Liên kết dấu hệ số $a$ và hướng mở.', reason: 'Thường chọn đại (50/50).', advice: 'Sử dụng quy tắc bàn tay hoặc vẽ mặt cười/mếu.' },
-                    "Q2": { qContent: 'Công thức tọa độ đỉnh $I$.', gap: 'Ghi nhớ chính xác dấu.', reason: 'Thử sai liên tục giữa các phương án đảo dấu.', advice: 'Tự viết công thức trước khi chọn.' },
-                    "Q3": { qContent: 'Trục đối xứng của $y = -4x^2 - 16x + 3$.', gap: 'Phân biệt $x=$ và $y=$, xử lý dấu.', reason: 'Thử sai ở chữ cái x/y trước, sau đó thử sai dấu.', advice: 'Nhấn mạnh trục cắt $Ox$ nên bắt đầu bằng $x=$.' },
-                    "Q4": { qContent: 'Tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', gap: 'Kỹ năng tính toán (thay $x$ tìm $y$).', reason: 'Ngại tính $y$, thử các đáp án có $x=-2$.', advice: 'Dạy sử dụng phím CALC để chống sai dấu ngoặc.' },
-                    "Q5": { qContent: 'Khoảng đồng biến của $y = x^2 - 4x + 3$.', gap: 'Đọc khoảng trên trục hoành.', reason: 'Nhập bừa các hệ số hoặc tọa độ $y$.', advice: 'Bắt buộc vẽ bảng biến thiên.' },
-                    "Q6": { qContent: 'Max/Min của $y = -x^2 + 4x - 3$.', gap: 'Bản chất cực trị.', reason: 'Sai qua 2 bước: Nhầm Max/Min và nhầm $x$ với $y$.', advice: 'So sánh ngọn núi/thung lũng. Giá trị luôn là $y$.' },
-                    "Q7": { qContent: 'Kiểm tra 4 mệnh đề về $y = 2x^2 - 8x + 6$.', gap: 'Kiểm tra đa thông tin.', reason: 'Lười suy nghĩ, bấm đại cho qua.', advice: 'Vẽ phác thảo nhanh 5 giây để loại trừ.' }
+                attempts: { 
+                    "Q1": { qContent: 'Cho $y = -3x^2 + 5x - 2$. Phát biểu "Bề lõm quay xuống" là đúng hay sai?', gap: 'Liên kết giữa dấu của hệ số $a$ và hướng mở của Parabol.', reason: 'Vì đây là câu hỏi Đúng/Sai (50/50), học sinh thường chọn đại một phương án mà không nhìn vào hệ số $a$. Khi sai, các em chỉ việc chọn ngược lại mà không thực sự suy nghĩ tại sao.', advice: 'Trước khi cho làm bài, yêu cầu học sinh dùng bút đỏ khoanh tròn hệ số $a$. Thực hiện quy tắc bàn tay: "Tay ngửa là dương, tay úp là âm".' },
+                    "Q2": { qContent: 'Chọn công thức tổng quát đúng cho tọa độ đỉnh $I$.', gap: 'Ghi nhớ chính xác các ký hiệu và dấu trong công thức $-\\frac{b}{2a}$ và $-\\frac{\\Delta}{4a}$.', reason: 'Các đáp án gây nhiễu được thiết kế bằng cách đảo dấu (A, C, D). Học sinh bị "loạn thị giác". Thay vì nhớ công thức, các em thử chọn từng cái cho đến khi thấy hệ thống báo "Đúng" thì mới bắt đầu ghi nhớ cái đó (học ngược).', advice: 'Yêu cầu học sinh tự viết công thức ra giấy nháp trước khi nhìn vào màn hình. Phải nhấn mạnh: "Cả x và y đều phải có dấu trừ phía trước".' },
+                    "Q3": { qContent: 'Tìm trục đối xứng của $y = -4x^2 - 16x + 3$.', gap: 'Phân biệt giữa phương trình đường thẳng đứng ($x=...$) và đường nằm ngang ($y=...$).', reason: 'Học sinh thường thử sai ở phần ký hiệu $x$ và $y$ (chọn C hoặc D trước), sau đó mới thử sai tiếp ở phần dấu của con số (chọn A thay vì B).', advice: 'Nhấn mạnh "Trục đối xứng đi qua hoành độ đỉnh, mà hoành độ thì phải là $x$". Cho học sinh vẽ một Parabol và kẻ trục đối xứng, ghi chữ $x$ thật lớn lên trục đó.' },
+                    "Q4": { qContent: 'Tìm tọa độ đỉnh của $y = -2x^2 - 8x - 10$.', gap: 'Kỹ năng tính toán số học, đặc biệt là khi thay $x$ vào hàm số để tìm $y$.', reason: 'Học sinh tính được $x = -2$ nhưng ngại tính $y$ vì sợ sai dấu khi bình phương số âm. Các em sẽ thử chọn các đáp án có $x = -2$ (A hoặc C) để xem cái nào đúng, thay vì tự tính $y$.', advice: 'Dạy học sinh cách sử dụng máy tính bỏ túi để kiểm tra (chức năng giải phương trình bậc hai hoặc phím CALC). Phải rèn luyện kỹ năng đóng ngoặc khi bình phương số âm: $(-2)^2$.' },
+                    "Q5": { qContent: 'Điền số vào khoảng đồng biến $(..., +\\infty)$ của $y = x^2 - 4x + 3$.', gap: 'Chuyển đổi từ tọa độ đỉnh sang khoảng biến thiên trên trục hoành.', reason: 'Đây là câu hỏi nhập liệu (input). Học sinh không biết điền số nào nên thường thử điền các hệ số $a, b, c$ hoặc số $0, 1$ vào. Các em không hiểu con số này chính là hoành độ đỉnh.', advice: 'Luôn yêu cầu vẽ bảng biến thiên (BBT). Con số ngăn cách giữa mũi tên đi lên và đi xuống chính là con số cần điền.' },
+                    "Q6": { qContent: 'Xác định Max/Min của $y = -x^2 + 4x - 3$.', gap: 'Hiểu bản chất cực trị là tung độ đỉnh và mối quan hệ với bề lõm.', reason: 'Học sinh thử sai qua 2 bước: Bước 1 chọn nhầm giữa "Maximum" và "Minimum" (do không nhìn $a$). Bước 2 chọn nhầm giữa giá trị $x$ và $y$.', advice: 'Sử dụng hình ảnh "Đỉnh núi" (Max) và "Đáy thung lũng" (Min). Yêu cầu học sinh trả lời câu hỏi: "Ta đang đứng ở độ cao bao nhiêu?" (là hỏi $y$).' },
+                    "Q7": { qContent: 'Kiểm tra 4 mệnh đề về tính chất của $y = 2x^2 - 8x + 6$.', gap: 'Khả năng tổng hợp và kiểm tra nhiều thông tin cùng lúc.', reason: 'Học sinh thấy câu hỏi quá dài nên không muốn kiểm tra từng đáp án. Các em bấm đại một cái, nếu sai thì bấm cái tiếp theo. Đây là tâm lý "lười suy nghĩ" khi gặp câu hỏi đa mục tiêu.', advice: 'Dạy học sinh phương pháp loại trừ. Phác thảo nhanh đồ thị (Sketching) ra nháp trong 5 giây sẽ giúp nhìn ra mệnh đề sai nhanh hơn là tính toán từng bước cho 4 đáp án.' }
                 }
             },
             en: {
@@ -187,22 +196,22 @@
                     "Calculating the Maximum/Minimum value": { gap: 'Chooses the $x$ coordinate instead of the $y$ coordinate as the answer.', reason: 'Rushing. After finding $x$, seeing that number in the options makes them impulsively select it, forgetting the concept of a function\'s "Value".', advice: 'Set a reading rule: Whenever the word "Value" appears in extrema problems, underline it and write "$y = ?$" next to it to prime the brain.' }
                 },
                 time: {
-                    "Q1": { qContent: 'Determine the truth of "Concaves down" for $y = -3x^2 + 5x - 2$.', gap: 'Mental link between the sign of $a$ and the graph\'s orientation.', reason: 'Students pause to recall the rule (negative equals up or down?) rather than having an immediate visual reflex.', advice: 'Teach the "Smile/Frown" mnemonic. Encourage marking the sign of $a$ as soon as they read the function.' },
-                    "Q2": { qContent: 'Select the correct general formula for vertex $I$.', gap: 'Visual distractors that look almost identical.', reason: '"Visual clutter" effect. Students move their eyes back and forth between options to compare tiny plus/minus signs.', advice: 'Ask students to write down the formula from memory before looking at the options. Matching their own answer is faster.' },
-                    "Q3": { qContent: 'Find the axis of symmetry for $y = -4x^2 - 16x + 3$.', gap: 'Distinguishing between $x = ...$ and $y = ...$ formats.', reason: 'Students waste time mentally calculating $-\\frac{b}{2a}$ with several negatives and hesitating between $x$ or $y$.', advice: 'Emphasize that "The axis of symmetry is a vertical line; it always starts with $x=$". Teach the "Sign Counting" rule.' },
-                    "Q4": { qContent: 'Determine the vertex for $y = -2x^2 - 8x - 10$.', gap: 'Substitution skills and evaluating the function.', reason: 'Arithmetic errors. When the result doesn\'t match an option, students panic and restart the whole process.', advice: 'Guide students to use the CALC key on their calculators after finding $x$.' },
-                    "Q5": { qContent: 'Fill in the blank for the increasing interval $(..., +\\infty)$ of $y = x^2 - 4x + 3$.', gap: 'Mapping a formula to behavior on the number line.', reason: 'Rote memorization of logic instead of using visuals. Processing heavy logical conditions slows down the brain.', advice: 'Always require a quick Table of Variation or a sketch. The visual determines the interval faster.' },
-                    "Q6": { qContent: 'Identify if $y = -x^2 + 4x - 3$ has a Max or Min and find its value.', gap: 'Two-step process: 1. Sign of $a$; 2. Calculating $y_I$.', reason: 'Confusion between "at $x$" (location) and "value of the function $y$." Students find $x$ and stall.', advice: 'Use the "Mountain Peak" (Max) and "Valley Floor" (Min) analogy. Reinforce: "Value" refers to $y$.' },
-                    "Q7": { qContent: 'Verify 4 statements about the properties of $y = 2x^2 - 8x + 6$.', gap: 'High cognitive load due to the volume of information to check.', reason: 'Students usually check options A, B, C sequentially. If D is the answer, they spend 3-4 times longer.', advice: 'Teach the "Quick Sketch" strategy. Drawing the shape and vertex helps verify all 4 statements visually.' }
+                    "Q1": { qContent: 'Determine the truth of "Concaves down" for $y = -3x^2 + 5x - 2$.', gap: 'Mental link between the sign of coefficient $a$ and the graph\'s orientation.', reason: 'Students often pause to recall the rule (negative equals up or down?) rather than having an immediate visual reflex.', advice: 'Teach the "Smile/Frown" mnemonic ($a < 0$ is a frown $\\rightarrow$ concaves down). Encourage marking the sign of $a$ as soon as they read the function.' },
+                    "Q2": { qContent: 'Select the correct general formula for vertex $I$.', gap: 'Visual distractors that look almost identical in terms of signs and symbols.', reason: '"Visual clutter" effect. Students move their eyes back and forth between options A, B, C, and D to compare tiny plus/minus signs, leading to repetitive reading.', advice: 'Ask students to write down the formula from memory before looking at the options. Matching their own written answer is much faster than analyzing four deceptive distractors.' },
+                    "Q3": { qContent: 'Find the axis of symmetry for $y = -4x^2 - 16x + 3$.', gap: 'Distinguishing between $x = ...$ and $y = ...$ formats and handling multiple negative signs.', reason: 'Students waste time mentally calculating $-\\frac{b}{2a}$ with several negatives $(-16, -4)$ and hesitating between choosing $x$ or $y$.', advice: 'Emphasize that "The axis of symmetry is a vertical line; it always starts with $x=$." Teach a "Sign Counting" rule: 3 negatives in the expression $-\\frac{-16}{2(-4)}$ result in a negative answer.' },
+                    "Q4": { qContent: 'Determine the vertex for $y = -2x^2 - 8x - 10$.', gap: 'Substitution skills and evaluating the function at a point.', reason: 'Arithmetic errors (especially squaring negative numbers). When the result doesn\'t match an option, students panic and restart the whole process.', advice: 'Guide students to use the CALC key on their calculators after finding $x$. Alternatively, use the Max/Min feature in the quadratic equation mode for an instant check.' },
+                    "Q5": { qContent: 'Fill in the blank for the increasing interval $(..., +\\infty)$ of $y = x^2 - 4x + 3$.', gap: 'Mapping a formula to behavior on the number line.', reason: 'Rote memorization of logic ("Increasing when $a > 0$ and $x > ...$") instead of using visuals. Processing heavy logical conditions slows down the brain.', advice: 'Always require a quick Table of Variation or a sketch. The visual of the graph going up or down determines the interval faster than any text-based formula.' },
+                    "Q6": { qContent: 'Identify if $y = -x^2 + 4x - 3$ has a Max or Min and find its value.', gap: 'Two-step process: 1. Sign of $a$ for type; 2. Calculating $y_I$.', reason: 'Confusion between "at $x$" (location) and "value of the function $y$." Students often find $x$ and then stall, wondering if that is the final answer.', advice: 'Use the "Mountain Peak" (Max) and "Valley Floor" (Min) analogy. Reinforce: "Value" always refers to $y$.' },
+                    "Q7": { qContent: 'Verify 4 statements about the properties of $y = 2x^2 - 8x + 6$.', gap: 'High cognitive load due to the volume of information to check.', reason: 'This is a "time sink." Students usually check options A, B, and C sequentially. If D is the answer, they spend 3-4 times longer on this question than others.', advice: 'Teach the "Quick Sketch" strategy. By drawing the shape and vertex, students can verify all 4 statements visually at once rather than through isolated calculations.' }
                 },
                 attempts: {
-                    "Q1": { qContent: 'Determine concavity direction.', gap: 'Linking $a$ sign to opening.', reason: 'Guessing randomly.', advice: 'Use the Hand Rule or Smile rule.' },
-                    "Q2": { qContent: 'Vertex formula.', gap: 'Memorizing specific signs.', reason: 'Trial and error through options.', advice: 'Write formula before selecting.' },
-                    "Q3": { qContent: 'Axis of symmetry format & calculation.', gap: 'Differentiating $x=$ and $y=$.', reason: 'Failing on variables, then failing on signs.', advice: 'Emphasize axis crosses $x$-axis.' },
-                    "Q4": { qContent: 'Vertex calculation.', gap: 'Arithmetic substitution.', reason: 'Fear of sign errors, guessing options with correct $x$.', advice: 'Use calculator CALC function.' },
-                    "Q5": { qContent: 'Increasing/decreasing intervals.', gap: 'Mapping vertex to intervals.', reason: 'Entering random coefficients.', advice: 'Require Table of Variation.' },
-                    "Q6": { qContent: 'Identifying Max/Min and its value.', gap: 'Vertex properties.', reason: 'Two-step failure (wrong extremum type, wrong coordinate).', advice: 'Mountain/Valley analogy. Value = $y$.' },
-                    "Q7": { qContent: 'Verifying properties.', gap: 'Synthesizing info.', reason: 'Clicking randomly to avoid calculating.', advice: 'Quick sketching technique.' }
+                    "Q1": { qContent: 'Is the statement "The parabola concaves down" for $y = -3x^2 + 5x - 2$ True or False?', gap: 'Linking the sign of coefficient $a$ to the direction of the parabola\'s opening.', reason: 'Since it is a True/False (50/50) question, students often guess without checking $a$. If they get it wrong, they simply click the other option without reflecting on why.', advice: 'Before they answer, have students circle the coefficient $a$ in red. Use the "Hand Rule": "Palm up is positive, palm down is negative."' },
+                    "Q2": { qContent: 'Select the correct general formula for the vertex $I$.', gap: 'Memorizing specific signs and positions in $-\\frac{b}{2a}$ and $-\\frac{\\Delta}{4a}$.', reason: 'The distractors (A, C, D) are designed with swapped signs, causing "visual confusion." Instead of recalling the formula, students click through until they see "Correct," essentially learning backward.', advice: 'Ask students to write the formula on paper before looking at the screen. Emphasize: "Both x and y coordinates must have a minus sign in front."' },
+                    "Q3": { qContent: 'Determine the axis of symmetry for $y = -4x^2 - 16x + 3$.', gap: 'Differentiating between vertical line equations ($x=...$) and horizontal ones ($y=...$).', reason: 'Students often fail on the variable symbol first (choosing $y$ instead of $x$), then fail again on the arithmetic sign of the result.', advice: 'Highlight that "The axis of symmetry passes through the x-coordinate of the vertex, so it MUST be $x =$." Have them draw a parabola and label the axis with a large "$x$."' },
+                    "Q4": { qContent: 'Determine the vertex for $y = -2x^2 - 8x - 10$.', gap: 'Arithmetic skills, particularly substituting $x$ into the function to find $y$.', reason: 'Students find $x = -2$ correctly but are hesitant to calculate $y$ for fear of sign errors when squaring negatives. They try options with $x = -2$ (A or C) to see which is right instead of calculating it themselves.', advice: 'Teach them to use the calculator\'s CALC key or the quadratic solver to verify. Practice using parentheses for squaring negatives: $(-2)^2$.' },
+                    "Q5": { qContent: 'Fill in the blank for the increasing interval $(..., +\\infty)$ of $y = x^2 - 4x + 3$.', gap: 'Mapping vertex coordinates to the variation intervals on the x-axis.', reason: 'As an input question, students often guess by typing coefficients $a, b, c$ or numbers like $0, 1$. They don\'t grasp that the blank is specifically the vertex\'s x-coordinate.', advice: 'Always require a Table of Variation (ToV). The number separating the up and down arrows is the value they need to input.' },
+                    "Q6": { qContent: 'Identify the Max/Min of $y = -x^2 + 4x - 3$.', gap: 'Understanding that extrema are vertex y-coordinates and their relation to concavity.', reason: 'A two-step failure: First, guessing between "Maximum" and "Minimum" (ignoring $a$). Second, confusing the $x$ position with the $y$ value.', advice: 'Use the "Mountain Peak" (Max) and "Valley Floor" (Min) analogy. Ask: "At what height are we standing?" (referring to $y$).' },
+                    "Q7": { qContent: 'Verify 4 statements about the properties of $y = 2x^2 - 8x + 6$.', gap: 'Ability to synthesize and verify multiple pieces of information simultaneously.', reason: 'Students find the question too long and refuse to check each option. They click randomly until they hit the right one. This is a "cognitive laziness" response to multi-objective questions.', advice: 'Teach the "Quick Sketching" method. Spending 5 seconds sketching the shape and vertex helps them spot the false statement faster than calculating each option individually.' }
                 }
             }
         };
@@ -295,13 +304,14 @@
             let dataPoints = [];
 
             if(type === 'mistakes') {
-                // Sắp xếp Topic theo số lượng giảm dần
-                labels = Object.keys(metricMap).sort((a,b) => metricMap[b] - metricMap[a]);
-                labels.forEach(t => dataPoints.push(metricMap[t]));
+                let sortedKeys = Object.keys(metricMap).sort((a,b) => metricMap[b] - metricMap[a]);
+                // Nếu ngôn ngữ là Tiếng Việt, hiển thị Tên Tiếng Việt trên Chart, nếu không thì dùng key gốc
+                labels = sortedKeys.map(k => (lang === 'vi' && PEDAGOGY_DATA.vi.mistakes[k]) ? PEDAGOGY_DATA.vi.mistakes[k].title : k);
+                sortedKeys.forEach(t => dataPoints.push(metricMap[t]));
                 currentChart = new Chart(ctx, { 
                     type: 'bar', 
                     data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Frequency of Review Topics' : 'Tần suất xuất hiện (Nhóm)', data: dataPoints, backgroundColor: '#dc3545' }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } // Nằm ngang cho dễ đọc chữ dài
+                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
                 });
             } else if (type === 'time') {
                 labels = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"];
@@ -318,7 +328,6 @@
             let metricMap = {};
             
             if (type === 'mistakes') {
-                // ĐẾM THEO REVIEW TOPICS THAY VÌ WRONG ANSWERS
                 dataList.forEach(row => {
                     if(row.reviewTopics && row.reviewTopics !== "None" && row.reviewTopics !== "Perfect Run") {
                         let topics = row.reviewTopics.split(",").map(t => t.trim());
@@ -339,23 +348,19 @@
                 });
             } 
             else if (type === 'attempts') {
-                // TÍNH TOÁN SỐ LẦN THỬ TỪ WRONG ANSWERS
                 let questions = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"];
                 questions.forEach(q => metricMap[q] = { total: 0, count: 0 });
                 
                 dataList.forEach(row => {
-                    // Cắt các đáp án sai thành mảng, loại bỏ khoảng trắng, lấy đúng 2 ký tự đầu (vd "Q1")
                     let wArr = [];
                     if (row.wrongAnswers && row.wrongAnswers !== "None") {
                         wArr = row.wrongAnswers.split(",").map(s => s.trim().substring(0,2));
                     }
                     
                     questions.forEach(q => {
-                        // Đếm số lần câu q xuất hiện trong danh sách sai của nhóm này
                         let mistakesCount = wArr.filter(ans => ans === q).length;
-                        // Tổng số lần thử = số lần sai + 1 lần đúng (để qua bài)
                         metricMap[q].total += (1 + mistakesCount);
-                        metricMap[q].count++; // Số nhóm
+                        metricMap[q].count++; 
                     });
                 });
             }
@@ -391,7 +396,9 @@
                 top3Data.forEach(item => {
                     let d = PEDAGOGY_DATA[lang].mistakes[item.q];
                     if(d) {
-                        htmlContent += `<li><strong>[Topic] ${item.q} (${item.val} ${lang==='en'?'groups':'nhóm mắc phải'})</strong><br>
+                        // Lấy Title tiếng Việt nếu có, ngược lại giữ nguyên gốc
+                        let displayTitle = (lang === 'vi' && d.title) ? d.title : item.q;
+                        htmlContent += `<li><strong>[Topic] ${displayTitle} (${item.val} ${lang==='en'?'groups':'nhóm mắc phải'})</strong><br>
                                         <i>${lang==='en'?'Knowledge Gap':'Lỗi sai'}</i>: ${d.gap}<br>
                                         <i>${lang==='en'?'Reason':'Lý do'}</i>: ${d.reason}<br>
                                         <i>${lang==='en'?'Advice':'Lời khuyên'}</i>: ${d.advice}</li>`;
@@ -429,7 +436,7 @@
             document.getElementById('ai-output').innerHTML = htmlContent;
             document.getElementById('ai-result-modal').style.display = 'block';
 
-            // TRIGGER MATHJAX TO RENDER LATEX
+            // GỌI LẠI MATHJAX SAU KHI HTML ĐƯỢC CHÈN VÀO TRANG ĐỂ RENDER LATEX
             if (window.MathJax) {
                 MathJax.typesetPromise([document.getElementById('ai-output')]).catch(function (err) {
                     console.log('MathJax typeset failed: ', err.message);
@@ -445,8 +452,8 @@
                 let d = PEDAGOGY_DATA[lang][currentAnalysisType][q];
                 if (d) {
                     if (currentAnalysisType === 'mistakes') {
-                        // Sửa prompt cho phù hợp với data Topic
-                        contextDetails += `\n\n- ${lang==='en'?'Topic':'Chủ đề'}: ${q}\n- ${lang==='en'?'Knowledge Gap':'Lỗ hổng kiến thức'}: ${d.gap}\n- ${lang==='en'?'Reason for this error':'Lý do học sinh mắc phải sai lầm này'}: ${d.reason}`;
+                        let displayTitle = (lang === 'vi' && d.title) ? d.title : q;
+                        contextDetails += `\n\n- ${lang==='en'?'Topic':'Chủ đề'}: ${displayTitle}\n- ${lang==='en'?'Knowledge Gap':'Lỗ hổng kiến thức'}: ${d.gap}\n- ${lang==='en'?'Reason for this error':'Lý do học sinh mắc phải sai lầm này'}: ${d.reason}`;
                     } else {
                         contextDetails += `\n\n- ${lang==='en'?'Question':'Câu hỏi'}: ${d.qContent}\n- ${lang==='en'?'Gap/Difficulty':'Khó khăn/Lỗi sai về kỹ năng'}: ${d.gap}\n- ${lang==='en'?'Reason':'Lý do học sinh mắc phải sai lầm này'}: ${d.reason}`;
                     }
