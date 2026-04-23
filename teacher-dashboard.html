@@ -26,7 +26,7 @@
             --table-bg: #1e1e1e;
             --table-hover: #2c2c2c;
             --table-border: #333;
-            --primary-color: #26698c; 
+            --primary-color: #3161ff; 
             --secondary-color: #a97bfa;
             --input-bg: #333;
             --input-text: #e0e0e0;
@@ -62,8 +62,9 @@
             right: 0;
             top: 0;
             display: flex;
+            flex-direction: column;
             gap: 10px;
-            align-items: flex-start;
+            align-items: flex-end;
         }
 
         .dropbtn, .lang-select {
@@ -159,11 +160,6 @@
         </div>
 
         <div class="top-right-controls">
-            <select id="app-language" class="lang-select" onchange="changeLanguage()">
-                <option value="vi">🇻🇳 Tiếng Việt</option>
-                <option value="en">🇬🇧 English</option>
-            </select>
-
             <div class="dropdown">
                 <button onclick="toggleSettings()" class="dropbtn" id="ui-btn-settings">⚙️ Settings</button>
                 <div id="settingsDropdown" class="dropdown-content">
@@ -187,6 +183,11 @@
                     </div>
                 </div>
             </div>
+
+            <select id="app-language" class="lang-select" onchange="changeLanguage()">
+                <option value="vi">🇻🇳 Tiếng Việt</option>
+                <option value="en">🇬🇧 English</option>
+            </select>
         </div>
     </div>
 
@@ -307,18 +308,38 @@
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const btn = document.getElementById('btn-dark-mode');
-            if (document.body.classList.contains('dark-mode')) {
+            const isDark = document.body.classList.contains('dark-mode');
+            
+            if (isDark) {
                 btn.innerText = "☀️ Light Mode";
+                Chart.defaults.color = '#ffffff'; // Set màu trắng tinh cho dark mode
             } else {
                 btn.innerText = "🌙 Dark Mode";
+                Chart.defaults.color = '#666666'; // Trở về màu xám cho light mode
             }
-            if(document.getElementById('ai-result-modal').style.display === 'block') {
-                Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#666';
-                if(currentChart) currentChart.update();
+            
+            // Ép cập nhật lập tức mọi thành phần text của chart đang hiện
+            if (currentChart) {
+                let textColor = isDark ? '#ffffff' : '#666666';
+                let gridColor = isDark ? '#444444' : '#e5e5e5';
+                
+                if (currentChart.options.plugins && currentChart.options.plugins.legend) {
+                    currentChart.options.plugins.legend.labels.color = textColor;
+                }
+                if (currentChart.options.scales.x) {
+                    currentChart.options.scales.x.ticks.color = textColor;
+                    currentChart.options.scales.x.grid.color = gridColor;
+                }
+                if (currentChart.options.scales.y) {
+                    currentChart.options.scales.y.ticks.color = textColor;
+                    currentChart.options.scales.y.grid.color = gridColor;
+                }
+                currentChart.update();
             }
         }
 
-        Chart.defaults.color = '#666';
+        // Cài đặt màu Chart.js ban đầu
+        Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#ffffff' : '#666666';
 
         // === DATA & DỊCH THUẬT ===
         const TOPIC_TRANSLATIONS = {
@@ -500,6 +521,22 @@
             let labels = [];
             let dataPoints = [];
 
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#ffffff' : '#666666';
+            const gridColor = isDark ? '#444444' : '#e5e5e5';
+
+            let baseOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: textColor } }
+                },
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                }
+            };
+
             if(type === 'mistakes') {
                 let sortedKeys = Object.keys(metricMap).sort((a,b) => metricMap[b] - metricMap[a]);
                 labels = sortedKeys.map(k => (lang === 'vi' && PEDAGOGY_DATA.vi.mistakes[k]) ? PEDAGOGY_DATA.vi.mistakes[k].title : k);
@@ -507,16 +544,24 @@
                 currentChart = new Chart(ctx, { 
                     type: 'bar', 
                     data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Frequency of Review Topics' : 'Tần suất xuất hiện (Nhóm)', data: dataPoints, backgroundColor: '#dc3545' }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } 
+                    options: { ...baseOptions, indexAxis: 'y' } 
                 });
             } else if (type === 'time') {
                 labels = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"];
                 labels.forEach(q => dataPoints.push(metricMap[q] && metricMap[q].count > 0 ? Math.round(metricMap[q].total / metricMap[q].count) : 0));
-                currentChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Avg Time (Seconds)' : 'Thời gian TB (Giây)', data: dataPoints, borderColor: '#6f42c1', backgroundColor: 'rgba(111, 66, 193, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+                currentChart = new Chart(ctx, { 
+                    type: 'line', 
+                    data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Avg Time (Seconds)' : 'Thời gian TB (Giây)', data: dataPoints, borderColor: '#6f42c1', backgroundColor: 'rgba(111, 66, 193, 0.2)', fill: true, tension: 0.3 }] }, 
+                    options: baseOptions 
+                });
             } else if (type === 'attempts') {
                 labels = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"];
                 labels.forEach(q => dataPoints.push(metricMap[q] && metricMap[q].count > 0 ? (metricMap[q].total / metricMap[q].count).toFixed(2) : 0));
-                currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Avg Attempts / Group' : 'Số lần thử TB / Nhóm', data: dataPoints, backgroundColor: '#ffc107' }] }, options: { responsive: true, maintainAspectRatio: false } });
+                currentChart = new Chart(ctx, { 
+                    type: 'bar', 
+                    data: { labels: labels, datasets: [{ label: lang === 'en' ? 'Avg Attempts / Group' : 'Số lần thử TB / Nhóm', data: dataPoints, backgroundColor: '#ffc107' }] }, 
+                    options: baseOptions 
+                });
             }
         }
 
@@ -769,7 +814,6 @@
                 }
 
                 let tr = document.createElement('tr');
-                // Loại bỏ <small> ở cột Review Topics
                 tr.innerHTML = `<td><b>${student.class || ""}</b></td>
                                 <td>${student.name || ""}</td>
                                 <td><b>${(student.mode || "practice").toUpperCase()}</b></td>
