@@ -121,10 +121,6 @@
                     <div style="width: 32px; height: 32px; background: url('assets/img/pipe.png') center center no-repeat; background-size: contain; transform: scale(1.5); image-rendering: pixelated; margin: 5px;"></div>
                 </div>
 
-                <p id="mobile-warning" style="font-size: 15px; color: #000; background-color: rgba(255, 255, 255, 0.9); padding: 8px 15px; border-radius: 10px; margin: 20px 0 10px 0; text-align: center; font-family: 'Roboto', sans-serif; font-weight: bold; width: 85%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); box-sizing: border-box;">
-                    📱 For mobile users, rotate your device horizontally and unmute for full experience.
-                </p>
-
                 <div style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.7); padding: 20px; border-radius: 15px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); width: 90%; max-width: 500px; box-sizing: border-box;">
                     <p style="margin: 0 0 15px 0; font-size: 24px; color: #FFD700; font-family: 'VT323', monospace;">Fill in the blanks to start!</p>
                     
@@ -141,9 +137,9 @@
                     </select>
                     
                     <div style="display: flex; gap: 10px; width: 100%; flex-wrap: wrap;">
-                        <button class="mode-btn practice-btn" onclick="startGame('practice')">PLAY PRACTICE MODE</button>
-                        <button class="mode-btn combat-btn" onclick="startGame('combat')">PLAY COMBAT MODE</button>
-                    </div>
+    <button class="mode-btn practice-btn" onclick="showDeviceWarning('practice')">PLAY PRACTICE MODE</button>
+    <button class="mode-btn combat-btn" onclick="showDeviceWarning('combat')">PLAY COMBAT MODE</button>
+</div>
                 </div>
                 <div style="height: 60px; flex-shrink: 0;"></div>
             </div>
@@ -270,9 +266,38 @@
                 <button onclick="closeReportReasonPopup()" class="action-btn" style="background:#6c757d; margin:0; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">Cancel</button>
             </div>
         </div>
+        <div id="device-warning-overlay" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:450px; background:#fff; padding:25px; border-radius:15px; box-shadow:0 10px 40px rgba(0,0,0,0.5); text-align:center; border:5px solid #ff8a00; z-index:9500; box-sizing:border-box;">
+    <div style="font-size: 50px; margin-bottom: 15px; display: flex; justify-content: center; gap: 20px;">
+        <span>🔄</span>
+        <span>🔊</span>
+    </div>
+    <p style="font-size: 20px; color: #333; font-family: 'Roboto', sans-serif; font-weight: bold; line-height: 1.5; margin-bottom: 25px;">
+        For mobile users, rotate your device horizontally and unmute for full experience
+    </p>
+    <button id="btn-understand" class="action-btn" style="background:#28a745; margin:0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); width: 100%;">Understand</button>
+</div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="game.js"></script>
+    <script>
+    let pendingGameMode = '';
+
+    function showDeviceWarning(mode) {
+        // Lưu lại chế độ người chơi đã chọn
+        pendingGameMode = mode;
+        // Hiển thị pop-up
+        document.getElementById('device-warning-overlay').style.display = 'block';
+    }
+
+    document.getElementById('btn-understand').addEventListener('click', function() {
+        // Ẩn pop-up
+        document.getElementById('device-warning-overlay').style.display = 'none';
+        // Gọi hàm startGame gốc có trong game.js
+        if (typeof startGame === 'function') {
+            startGame(pendingGameMode);
+        }
+    });
+</script>
 </body>
 </html>

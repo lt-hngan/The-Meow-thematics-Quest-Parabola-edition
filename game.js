@@ -418,15 +418,35 @@ function create(data) {
 }
 
 function update() {
-    if (isWaitingRoom) return; // KHÔNG CHO CHẠY UPDATE NẾU ĐANG Ở PHÒNG CHỜ
+    if (isWaitingRoom) return; 
     if (isQuizTime || isPaused) { if (player.anims && !isAttacking && !isPaused) player.anims.pause(); return; }
     if (isGameOver) return;
-    if (player.y > 650) takeEnvironmentalDamage(this, player);
-    
+
+    // --- LOGIC MỚI: Liên tục lưu lại vị trí an toàn khi đang chạy trên bục ---
+    if (player.body.touching.down) {
+        // Lùi X lại khoảng 120px để chắc chắn điểm hồi sinh nằm gọn trên bục, không bị sát mép vực
+        player.lastSafeX = player.x - 120; 
+        player.lastSafeY = player.y;
+    }
+
+    // --- LOGIC MỚI: Xử lý rớt vực ---
+    if (player.y > 650) {
+        handlePlayerFall(this, player);
+        return; 
+    }
+
+    // --- LOGIC MỚI: Chặn di chuyển khi đang hồi sinh (chớp nháy) ---
+    if (player.isRespawning) {
+        player.setVelocity(0, 0);
+        player.anims.play('idle', true);
+        return; 
+    }
+
     if (isCutscene) { player.setVelocityX(0); if (player.body.touching.down) player.anims.play('idle', true); if ((cursors.space.isDown || cursors.up.isDown) && player.body.touching.down) jump(this); return; }
     if (isKnockedBack) { if (!player.body.touching.down) player.anims.play('fall', true); else player.anims.play('idle', true); return; }
 
     player.setVelocityX(300);
+// ... các dòng bên dưới giữ nguyên
     if (!player.body.touching.down) { if (player.body.velocity.y < 0) player.anims.play('jump', true); else player.anims.play('fall', true); } else { player.anims.play('run', true); }
     if ((cursors.space.isDown || cursors.up.isDown) && player.body.touching.down) jump(this);
 
@@ -456,7 +476,9 @@ function createCheckpoint(group, scene, x, y) { let cp = scene.add.image(x, y - 
 function createProximityTrigger(group, scene, x, targetObj) { let trig = scene.add.rectangle(x, 400, 20, 800); scene.physics.add.existing(trig, true); trig.isProximity = true; trig.targetObj = targetObj; group.add(trig); }
 
 function jump(scene) { 
-    if (isPaused || isGameOver || isQuizTime || isKnockedBack || isAttacking) return;
+    // Đã thêm điều kiện: chặn nhảy nếu (player && player.isRespawning)
+    if (isPaused || isGameOver || isQuizTime || isKnockedBack || isAttacking || (player && player.isRespawning)) return;
+    
     if (tutorialStates.jumpWait && !tutorialStates.jumpDone) { tutorialStates.jumpDone = true; isCutscene = false; if (tutorialStates.jumpText) tutorialStates.jumpText.destroy(); player.body.setVelocityY(-650); scene.sound.play('jump'); return; }
     if (player.body.touching.down && !isCutscene) { player.body.setVelocityY(-650); scene.sound.play('jump'); } 
 }
@@ -651,7 +673,43 @@ function takeEnvironmentalDamage(scene, playerRef) {
     if(isGameOver) return; scene.sound.play('wrong'); scene.cameras.main.shake(300, 0.03); scene.cameras.main.flash(300, 255, 0, 0); isGameOver = true; playerRef.setTint(0xff0000); playerRef.setVelocityX(0); 
     if (userInfo.mode === 'practice') { setTimeout(() => { scene.scene.restart(savedCheckpoint ? { isCheckpointRestart: true, keepLives: true } : { keepLives: true }); }, 800); } else { lives--; heartLostCount++; updateLivesUI(); if (lives > 0) { setTimeout(() => { scene.scene.restart(savedCheckpoint ? { isCheckpointRestart: true, keepLives: true } : { keepLives: true }); }, 800); } else { doGameOver(scene, playerRef, "Game Over (Out of lives)"); } }
 }
+// ==========================================
+// HÀM XỬ LÝ KHI RỚT VỰC (KHÔNG TRỪ MẠNG)
+// ==========================================
+function handlePlayerFall(scene, playerRef) {
+    // Tránh gọi hàm liên tục khi đang rơi
+    if (playerRef.isRespawning) return; 
 
+    playerRef.isRespawning = true;
+    scene.sound.play('wrong'); // Phát âm thanh lỗi (nếu muốn, có thể bỏ dòng này)
+    
+    // Dừng mọi chuyển động và tắt trọng lực tạm thời
+    playerRef.setVelocity(0, 0);
+    playerRef.body.setAllowGravity(false);
+    
+    // Đưa nhân vật về vị trí an toàn cuối cùng.
+    // Dùng Math.max(100, ...) để tránh trường hợp rớt ngay đầu game bị kẹt ở x âm.
+    // Lùi Y lên 40px để nhân vật rơi nhẹ xuống bục, tránh kẹt collider.
+    let safeX = Math.max(100, playerRef.lastSafeX || playerRef.x - 120);
+    let safeY = playerRef.lastSafeY ? playerRef.lastSafeY - 40 : 350;
+    
+    playerRef.setPosition(safeX, safeY);
+
+    // Tạo hiệu ứng chớp nháy (1.5 giây) trước khi tiếp tục chạy
+    scene.tweens.add({
+        targets: playerRef,
+        alpha: 0.2,
+        yoyo: true,
+        repeat: 7, // Lặp lại 7 lần (tổng ~1.5 giây)
+        duration: 100,
+        onComplete: () => {
+            // Khôi phục trạng thái bình thường
+            playerRef.alpha = 1;
+            playerRef.body.setAllowGravity(true);
+            playerRef.isRespawning = false;
+        }
+    });
+}
 function handleWrongAnswer(questionId, wrongAnswerVal) { 
     let ansText = currentData.options ? currentData.options[wrongAnswerVal] : wrongAnswerVal;
     if (questionId === "T1") return showFeedbackPopup(false, "You chose: " + ansText + "\n\n💡 Hint: Tutorial: 1 + 1 = 2");
