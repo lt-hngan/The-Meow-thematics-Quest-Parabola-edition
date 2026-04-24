@@ -425,7 +425,7 @@ function update() {
     // --- LOGIC MỚI: Liên tục lưu lại vị trí an toàn khi đang chạy trên bục ---
     if (player.body.touching.down) {
         // Lùi X lại khoảng 120px để chắc chắn điểm hồi sinh nằm gọn trên bục, không bị sát mép vực
-        player.lastSafeX = player.x - 120; 
+        player.lastSafeX = player.x - 250; 
         player.lastSafeY = player.y;
     }
 
