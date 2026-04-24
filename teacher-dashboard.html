@@ -94,7 +94,7 @@
         }
         .ai-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--table-border); padding-bottom: 10px;}
         .ai-btn { background: var(--secondary-color); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-right: 10px; margin-bottom: 10px; font-size: 1em; }
-        .ai-btn:hover { opacity: 0.8; }
+        .ai-btn:hover { opacity: 0.8; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
 
         .stats-bar { text-align: center; background: var(--panel-bg); padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 1.1em; color: var(--text-color); font-weight: bold; border: 2px dashed #ccc; }
         
@@ -138,6 +138,11 @@
         
         .btn-prompt-3 { background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.9em; }
         .btn-prompt-3:hover { opacity: 0.8; }
+
+        /* ACTIONS BAR */
+        .actions-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
+        .btn-export { background-color: #28a745; }
+        .btn-reports { background-color: #dc3545; }
 
     </style>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -214,6 +219,11 @@
 
     <div id="stats-container" class="stats-bar">Waiting for data...</div>
     
+    <div class="actions-bar">
+        <button class="ai-btn btn-reports" id="ui-btn-reports" onclick="showReportsModal()">🚩 Show Student Reports</button>
+        <button class="ai-btn btn-export" id="ui-btn-export" onclick="exportToExcel()">📥 Export to Excel</button>
+    </div>
+
     <table id="dashboard-table">
         <thead>
             <tr>
@@ -270,6 +280,14 @@
         </div>
     </div>
 
+    <div id="reports-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 1000px;">
+            <button class="modal-close" onclick="closeModal('reports-modal')">X</button>
+            <h2 id="ui-reports-modal-title" style="margin-top: 0; color: #dc3545;">🚩 Student Reports</h2>
+            <div id="reports-content" style="margin-top: 20px;">Loading...</div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
@@ -312,13 +330,12 @@
             
             if (isDark) {
                 btn.innerText = "☀️ Light Mode";
-                Chart.defaults.color = '#ffffff'; // Set màu trắng tinh cho dark mode
+                Chart.defaults.color = '#ffffff'; 
             } else {
                 btn.innerText = "🌙 Dark Mode";
-                Chart.defaults.color = '#666666'; // Trở về màu xám cho light mode
+                Chart.defaults.color = '#666666'; 
             }
             
-            // Ép cập nhật lập tức mọi thành phần text của chart đang hiện
             if (currentChart) {
                 let textColor = isDark ? '#ffffff' : '#666666';
                 let gridColor = isDark ? '#444444' : '#e5e5e5';
@@ -338,7 +355,6 @@
             }
         }
 
-        // Cài đặt màu Chart.js ban đầu
         Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#ffffff' : '#666666';
 
         // === DATA & DỊCH THUẬT ===
@@ -356,7 +372,9 @@
             "Perfect Run": "Hoàn thành xuất sắc"
         };
 
-        const PEDAGOGY_DATA = {
+        const PEDAGOGY_DATA = { /* ...Dữ liệu pedagogy bạn đã cung cấp giữ nguyên... */ };
+        // Gán lại dữ liệu pedagogy đầy đủ của bạn vào đây để không bị mất
+        Object.assign(PEDAGOGY_DATA, {
             vi: {
                 mistakes: {
                     "Concavity": { title: "Bề lõm của đồ thị", gap: 'Không xác định đúng hướng bề lõm (quay lên hay quay xuống) dựa vào hệ số $a$.', reason: 'Học sinh học vẹt quy tắc chữ ("a dương thì quay lên") nhưng thiếu liên kết hình ảnh trực quan (visual mapping) trong não bộ. Dẫn đến khi chịu áp lực thời gian, các em dễ bị nhầm lẫn phương hướng hoặc bị nhiễu bởi các hệ số $b, c$.', advice: 'Áp dụng phương pháp ghi nhớ hình ảnh "Mặt cười / Mặt mếu". Hệ số $a > 0$ (tích cực/vui vẻ) $\\rightarrow$ đồ thị là miệng cười (lõm lên). Hệ số $a < 0$ (tiêu cực/buồn bã) $\\rightarrow$ đồ thị là miệng mếu (lõm xuống). Cho học sinh thực hành vẽ biểu tượng mặt cười/mếu ngay bên cạnh hàm số đề bài.' },
@@ -421,7 +439,7 @@
                     "Q7": { qContent: 'Verify 4 statements about the properties of [quadratic function].', gap: 'Ability to synthesize and verify multiple pieces of information simultaneously.', reason: 'Students find the question too long and refuse to check each option. They click randomly until they hit the right one. This is a "cognitive laziness" response to multi-objective questions.', advice: 'Teach the "Quick Sketching" method. Spending 5 seconds sketching the shape and vertex helps them spot the false statement faster than calculating each option individually.' }
                 }
             }
-        };
+        });
 
         const UI_TEXT = {
             en: {
@@ -429,14 +447,18 @@
                 btnMistakes: "Common Mistakes Analysis", btnTime: "Time Allocation Analysis", btnAttempts: "Attempts Analysis",
                 colClass: "Class", colMembers: "Group Members", colMode: "Mode", colStatus: "Status", colProgress: "Progress", colDuration: "Duration", colWrong: "Wrong Answers", colTopics: "Review Topics", colAction: "Action",
                 promptTitle: "AI Prompt Options:", btnPrompt1: "Copy prompt AI for deep analysis", btnPrompt2: "Copy prompt AI for activity suggestions", btnPrompt3: "Copy prompt AI for exam recommendations",
-                reportTitleMistakes: "Common Mistakes Analysis", reportTitleTime: "Time Allocation Analysis", reportTitleAttempts: "Attempt Analysis"
+                reportTitleMistakes: "Common Mistakes Analysis", reportTitleTime: "Time Allocation Analysis", reportTitleAttempts: "Attempt Analysis",
+                btnExport: "📥 Export to Excel", btnReports: "🚩 Show Student Reports", reportModalTitle: "🚩 Student Reports", reportNoData: "No reports found.",
+                colQuestion: "Question", colReason: "Reported Reason", msgDeleteConfirm: "Delete this report?", msgNoDataExport: "No data to export!"
             },
             vi: {
                 title: "🎮 BẢNG THEO DÕI KẾT QUẢ CỦA HỌC SINH 🎮", analyticsTitle: "🧠 Phân Tích Sư Phạm", selectClass: "Chọn Lớp Cần Phân Tích:", settingsTitle: "⚙️ Cài Đặt",
                 btnMistakes: "Phân tích lỗi sai phổ biến", btnTime: "Phân tích thời gian làm bài", btnAttempts: "Phân tích số lần thử và sai",
                 colClass: "Lớp", colMembers: "Thành Viên", colMode: "Chế Độ", colStatus: "Trạng Thái", colProgress: "Tiến Độ", colDuration: "Thời Gian", colWrong: "Câu Sai", colTopics: "Chủ Đề Ôn Tập", colAction: "Hành Động",
                 promptTitle: "Các Lựa Chọn Câu Lệnh AI (nhấn để sao chép):", btnPrompt1: "Sao chép lệnh AI giúp phân tích sâu hơn", btnPrompt2: "Sao chép lệnh AI giúp gợi ý hoạt động học tập", btnPrompt3: "Sao chép lệnh AI giúp đề xuất nội dung kiểm tra",
-                reportTitleMistakes: "Phân Tích Lỗi Sai Phổ Biến", reportTitleTime: "Phân Tích Thời Gian Thực Hiện", reportTitleAttempts: "Phân Tích Số Lần Thử Và Sai"
+                reportTitleMistakes: "Phân Tích Lỗi Sai Phổ Biến", reportTitleTime: "Phân Tích Thời Gian Thực Hiện", reportTitleAttempts: "Phân Tích Số Lần Thử Và Sai",
+                btnExport: "📥 Xuất file Excel", btnReports: "🚩 Xem Báo Cáo Của Học Sinh", reportModalTitle: "🚩 Báo Cáo Của Học Sinh", reportNoData: "Không có báo cáo nào.",
+                colQuestion: "Câu Hỏi", colReason: "Lý Do Báo Cáo", msgDeleteConfirm: "Bạn có chắc chắn muốn xóa báo cáo này?", msgNoDataExport: "Không có dữ liệu để xuất!"
             }
         };
 
@@ -497,6 +519,11 @@
             document.getElementById('btn-top-time').innerText = UI_TEXT[lang].btnTime;
             document.getElementById('btn-top-attempts').innerText = UI_TEXT[lang].btnAttempts;
             
+            // Text cho các nút Export & Report
+            document.getElementById('ui-btn-export').innerText = UI_TEXT[lang].btnExport;
+            document.getElementById('ui-btn-reports').innerText = UI_TEXT[lang].btnReports;
+            document.getElementById('ui-reports-modal-title').innerText = UI_TEXT[lang].reportModalTitle;
+
             document.getElementById('ui-col-class').innerText = UI_TEXT[lang].colClass;
             document.getElementById('ui-col-members').innerText = UI_TEXT[lang].colMembers;
             document.getElementById('ui-col-mode').innerText = UI_TEXT[lang].colMode;
@@ -513,6 +540,100 @@
             document.getElementById('btn-prompt-3').innerText = UI_TEXT[lang].btnPrompt3;
             renderTable();
         }
+
+        // === THÊM MỚI: CHỨC NĂNG XUẤT FILE EXCEL ===
+        window.exportToExcel = function() {
+            const lang = document.getElementById('app-language').value;
+            if (currentFilteredData.length === 0) {
+                alert(UI_TEXT[lang].msgNoDataExport);
+                return;
+            }
+            
+            // Thêm \uFEFF để Excel nhận diện chuẩn tiếng Việt UTF-8
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+            
+            // Header
+            csvContent += "Class,Group Members,Mode,Status,Progress,Duration,Wrong Answers,Review Topics\r\n";
+            
+            currentFilteredData.forEach(row => {
+                let rClass = `"${row.class || ""}"`;
+                let rName = `"${row.name || ""}"`;
+                let rMode = `"${row.mode || ""}"`;
+                let rStatus = `"${row.status || ""}"`;
+                let rProg = `"${row.progress || 0}/7"`;
+                let rDur = `"${row.duration || "N/A"}"`;
+                let rWrong = `"${(row.wrongAnswers || "None").replace(/"/g, '""')}"`;
+                let rTopics = `"${(row.reviewTopics || "Perfect Run").replace(/"/g, '""')}"`;
+                
+                csvContent += `${rClass},${rName},${rMode},${rStatus},${rProg},${rDur},${rWrong},${rTopics}\r\n`;
+            });
+            
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Meow_thematics_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // === THÊM MỚI: CHỨC NĂNG XEM REPORTS (HỌC SINH BÁO CÁO) ===
+        window.showReportsModal = function() {
+            const lang = document.getElementById('app-language').value;
+            document.getElementById('reports-modal').style.display = 'block';
+            const contentDiv = document.getElementById('reports-content');
+            contentDiv.innerHTML = "Loading reports...";
+
+            db.ref('reports').once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) {
+                    contentDiv.innerHTML = `<p style="text-align: center; font-style: italic;">${UI_TEXT[lang].reportNoData}</p>`;
+                    return;
+                }
+                
+                let html = `<table style="width:100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr>
+                                        <th>${UI_TEXT[lang].colClass}</th>
+                                        <th>${UI_TEXT[lang].colMembers}</th>
+                                        <th>${UI_TEXT[lang].colQuestion}</th>
+                                        <th>${UI_TEXT[lang].colReason}</th>
+                                        <th style="text-align: center;">${UI_TEXT[lang].colAction}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                                
+                for (let key in data) {
+                    let r = data[key];
+                    html += `<tr>
+                                <td><b>${r.class || ""}</b></td>
+                                <td>${r.name || ""}</td>
+                                <td><b>${r.questionId || ""}</b><br><small>${r.questionText || ""}</small></td>
+                                <td>${r.reason || ""}</td>
+                                <td style="text-align: center;">
+                                    <button class="delete-btn" onclick="deleteStudentReport('${key}')">🗑️</button>
+                                </td>
+                            </tr>`;
+                }
+                html += `</tbody></table>`;
+                contentDiv.innerHTML = html;
+                
+                if (window.MathJax) {
+                    MathJax.typesetPromise([contentDiv]).catch(err => console.log('MathJax failed: ', err.message));
+                }
+            });
+        };
+
+        window.deleteStudentReport = function(key) {
+            const lang = document.getElementById('app-language').value;
+            if(confirm(UI_TEXT[lang].msgDeleteConfirm)) {
+                db.ref('reports/' + key).remove().then(() => {
+                    showReportsModal(); // Refresh the table
+                });
+            }
+        };
+
+        // ===============================================
 
         function drawAnalysisChart(metricMap, type, lang) {
             document.getElementById('chart-container').style.display = 'block';
@@ -741,7 +862,12 @@
         window.setSort = function(col) { if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; } renderTable(); };
         window.parseDuration = function(durStr) { if(!durStr || durStr === "N/A") return 0; let m = 0, s = 0; let matchM = durStr.match(/(\d+)m/); let matchS = durStr.match(/(\d+)s/); if(matchM) m = parseInt(matchM[1]); if(matchS) s = parseInt(matchS[1]); return m * 60 + s; };
         window.getStatusRank = function(status) { let s = (status || "").toLowerCase(); if (s.includes("victory")) return 4; if (s.includes("game over")) return 3; if (s.includes("playing")) return 2; return 1; };
-        window.deleteEntry = function(id) { const lang = document.getElementById('app-language').value; let msg = lang === 'en' ? "Are you sure you want to delete this record?" : "Bạn có chắc chắn muốn xóa bản ghi này?"; if (confirm(msg)) db.ref('sessions/' + id).remove(); };
+        
+        window.deleteEntry = function(id) { 
+            const lang = document.getElementById('app-language').value; 
+            let msg = lang === 'en' ? "Are you sure you want to delete this record?" : "Bạn có chắc chắn muốn xóa bản ghi này?"; 
+            if (confirm(msg)) db.ref('sessions/' + id).remove(); 
+        };
 
         window.renderTable = function() {
             let fClass = document.getElementById("filter-class").value; 
@@ -771,7 +897,23 @@
                 return true;
             });
 
-            if (sortCol) { currentFilteredData.sort((a, b) => { let valA, valB; if (sortCol === 'name') { valA = (a.name || "").toLowerCase(); valB = (b.name || "").toLowerCase(); } else if (sortCol === 'progress') { valA = a.progress || 0; valB = b.progress || 0; } else if (sortCol === 'duration') { valA = parseDuration(a.duration); valB = parseDuration(b.duration); } else if (sortCol === 'status') { valA = getStatusRank(a.status); valB = getStatusRank(b.status); } if (valA < valB) return sortAsc ? -1 : 1; if (valA > valB) return sortAsc ? 1 : -1; return 0; }); }
+            if (sortCol) { 
+                currentFilteredData.sort((a, b) => { 
+                    let valA, valB; 
+                    if (sortCol === 'name') { 
+                        valA = (a.name || "").toLowerCase(); valB = (b.name || "").toLowerCase(); 
+                    } else if (sortCol === 'progress') { 
+                        valA = a.progress || 0; valB = b.progress || 0; 
+                    } else if (sortCol === 'duration') { 
+                        valA = parseDuration(a.duration); valB = parseDuration(b.duration); 
+                    } else if (sortCol === 'status') { 
+                        valA = getStatusRank(a.status); valB = getStatusRank(b.status); 
+                    } 
+                    if (valA < valB) return sortAsc ? -1 : 1; 
+                    if (valA > valB) return sortAsc ? 1 : -1; 
+                    return 0; 
+                }); 
+            }
 
             let statsText = lang === 'en' ? `Showing: ${currentFilteredData.length} groups.` : `Hiển thị: ${currentFilteredData.length} nhóm.`;
             document.getElementById("stats-container").innerText = statsText;
