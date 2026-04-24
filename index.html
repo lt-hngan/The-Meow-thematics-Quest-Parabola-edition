@@ -296,5 +296,52 @@
         }
     });
 </script>
+<div id="global-backdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index:3999;"></div>
+
+    <script>
+        (function() {
+            // Danh sách ID của các pop-up dạng hộp (không tính các màn hình full-screen như Pause Menu hay Game Over)
+            const popupIds = [
+                'quiz-overlay', 'tutorial-overlay', 'tutorial-info', 
+                'device-warning-overlay', 'knowledge-review-overlay', 
+                'questions-review-overlay', 'mistake-summary-overlay', 
+                'report-confirm-overlay', 'report-reason-overlay'
+            ];
+            const backdrop = document.getElementById('global-backdrop');
+
+            // Bộ quan sát (Observer) để theo dõi khi nào pop-up bật/tắt
+            const observer = new MutationObserver(() => {
+                let highestZ = 0;
+                let isAnyOpen = false;
+                
+                popupIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    // Kiểm tra xem pop-up có đang được hiển thị không
+                    if (el && window.getComputedStyle(el).display !== 'none') {
+                        isAnyOpen = true;
+                        // Lấy z-index của pop-up đang mở để đẩy backdrop lên ngay sát dưới nó
+                        let z = parseInt(window.getComputedStyle(el).zIndex) || 0;
+                        if (z > highestZ) highestZ = z;
+                    }
+                });
+
+                // Cập nhật trạng thái của lớp nền mờ
+                if (isAnyOpen) {
+                    backdrop.style.zIndex = highestZ - 1; // Luôn nằm ngay dưới pop-up trên cùng
+                    backdrop.style.display = 'block';
+                } else {
+                    backdrop.style.display = 'none';
+                }
+            });
+
+            // Gắn bộ quan sát vào các pop-up
+            popupIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    observer.observe(el, { attributes: true, attributeFilter: ['style'] });
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
